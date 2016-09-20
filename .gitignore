@@ -13,12 +13,14 @@ app/storage
 # Laravel
 public/upload
 public/export
-#public/lib # TODO when updating bower dependencies
-
+public/lib
 
 # Laravel 5
 .env.*.php
 .env.php
+
+# Cordova source folders
+cordova/platforms/ios/www/
 
 # Other
 .excluded/
@@ -28,6 +30,9 @@ public/export
 # Composer
 composer.phar
 composer.lock
+
+# Node
+node_modules
 
 # IDE files
 .idea

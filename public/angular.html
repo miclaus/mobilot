@@ -18,32 +18,13 @@
 
     <!-- Including the CSS File  -->
     <link rel="stylesheet" href="lib/angular-material/angular-material.min.css">
-    <link rel="stylesheet" href="assets/css/materialIcons.css">
-    <link rel="stylesheet" href="lib/ngWYSIWYG/css/editor.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="temp/ngWYSIWYG/css/editor.css">
     <link rel="stylesheet" href="assets/css/mobilot.css">
+    <link rel="stylesheet" href="assets/css/shame.css">
 
-    <!-- faviconit.com Favicons -->
-    <!-- <link rel="shortcut icon"             href="assets/favicon/favicon.ico">
-    <link rel="icon" sizes="16x16 32x32 64x64"    href="assets/favicon/favicon.ico">
-    <link rel="icon" type="image/png" sizes="196x196" href="assets/favicon/favicon-196.png">
-    <link rel="icon" type="image/png" sizes="160x160" href="assets/favicon/favicon-160.png">
-    <link rel="icon" type="image/png" sizes="96x96"   href="assets/favicon/favicon-96.png">
-    <link rel="icon" type="image/png" sizes="64x64"   href="assets/favicon/favicon-64.png">
-    <link rel="icon" type="image/png" sizes="32x32"   href="assets/favicon/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="16x16"   href="assets/favicon/favicon-16.png">
 
-    <link rel="apple-touch-icon" sizes="152x152" href="assets/favicon/favicon-152.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="assets/favicon/favicon-144.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="assets/favicon/favicon-120.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="assets/favicon/favicon-114.png">
-    <link rel="apple-touch-icon" sizes="76x76"   href="assets/favicon/favicon-76.png">
-    <link rel="apple-touch-icon" sizes="72x72"   href="assets/favicon/favicon-72.png">
-    <link rel="apple-touch-icon"         href="assets/favicon/favicon-57.png">
-
-    <meta name="msapplication-TileColor" content="#FFFFFF">
-    <meta name="msapplication-TileImage" content="assets/favicon/favicon-144.png">
-    <meta name="msapplication-config"  content="assets/favicon/browserconfig.xml"> -->
-    <!-- faviconit.com Favicons -->
+    <!-- Favicons -->
 
     <link rel="apple-touch-icon" sizes="57x57" href="assets/favicon/apple-touch-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="assets/favicon/apple-touch-icon-60x60.png">
@@ -66,32 +47,10 @@
 
 
     <style>
-      html, body
-      {
-        margin : 0;
-        height : 100%;
+      html, body {
+        margin: 0;
+        height: 100%;
       }
-
-      /* body[unresolved]
-      {
-        display       : flex;
-        justify-content   : center;
-
-        background      : url(assets/img/loading.gif) no-repeat;
-        background-size   : 64px 64px;
-        background-position : center 128px;
-      }
-
-      #supporter
-      {
-        position : fixed;
-        z-index  : 99;
-        left   : 0;
-        top    : 0;
-        width  : 100%;
-        height   : 100%;
-        display  : none;
-      } */
     </style>
   </head>
 
@@ -106,13 +65,14 @@
     <script src="assets/js/mobile_imports.js"></script>
 
     <script>
+      // NOTE: This should be deprecated code
       // use Mobilot as "mobidul-only"
-      if ( _START_MOBIDUL != null )
-      {
-        if ( ! isCordova )
+      if ( _START_MOBIDUL != null ) {
+        if ( ! isCordova ) {
           window.location = '/' + _START_MOBIDUL + '/';
-        else
+        } else {
           window.location = _mobimer_url + _mob_code + '=' + _START_MOBIDUL + '/';
+        }
       }
     </script>
 
@@ -138,12 +98,16 @@
     <script src="lib/ngmap/build/scripts/ng-map.min.js"></script>
     <script src='lib/angular-mousewheel/mousewheel.js'></script>
     <script src='lib/angular-pan-zoom/release/panzoom.min.js'></script>
-    <!-- TODO : check out missing file; NOTE don't bower yet !!! -->
     <script src="assets/js/exif.js"></script>
     <script src="assets/js/md5.js"></script>
-    <script src="lib/ngWYSIWYG/js/wysiwyg.js"></script>
+    <script src="temp/ngWYSIWYG/js/wysiwyg.js"></script>
     <script src="assets/js/angular-drag-and-drop-lists.js"></script>
     <script src="lib/ngstorage/ngStorage.min.js"></script>
+    <script src="lib/angular-cookies/angular-cookies.min.js"></script>
+    <script src="lib/angular-translate/angular-translate.min.js"></script>
+    <script src="lib/angular-translate-loader-static-files/angular-translate-loader-static-files.min.js"></script>
+    <script src="lib/angular-translate-storage-cookie/angular-translate-storage-cookie.min.js"></script>
+    <script src="lib/angular-translate-storage-local/angular-translate-storage-local.min.js"></script>
 
     <script src="assets/js/qrcode.js"></script>
     <script src="assets/js/qrcode_UTF8.js"></script>
@@ -151,7 +115,6 @@
 
     <script src="lib/angulartics/dist/angulartics.min.js"></script>
     <script src="lib/angulartics-google-analytics/dist/angulartics-google-analytics.min.js"></script>
-
 
 
     <!-- init -->
@@ -186,7 +149,8 @@
     <script src="app/modules/play/PlayService.js"></script>
     <script src="app/modules/play/PlayController.js"></script>
 
-    <!-- menu feature -->
+    <!-- menu features -->
+    <script src="app/modules/mobidul/menu/dialog/CloneMobidulDialogController.js"></script>
     <script src="app/modules/mobidul/menu/MenuController.js"></script>
 
     <!-- mobidul feature -->
@@ -199,6 +163,10 @@
     <script src="app/modules/mobidul/station/elements/ActionButtonDirective.js"></script>
     <script src="app/modules/mobidul/station/elements/TriggerNearDirective.js"></script>
     <script src="app/modules/mobidul/station/elements/PhotoUploadDirective.js"></script>
+    <script src="app/modules/mobidul/station/elements/SetTimeoutDirective.js"></script>
+    <script src="app/modules/mobidul/station/elements/FreeTextInputDirective.js"></script>
+    <script src="app/modules/mobidul/station/elements/ConfirmSocialDirective.js"></script>
+    <script src="app/modules/mobidul/station/elements/ShowScoreDirective.js"></script>
 
     <!-- creator feature -->
     <script src="app/modules/creator/CreatorService.js"></script>
@@ -211,6 +179,8 @@
     <script src="app/modules/core/CoreController.js"></script>
     <script src="app/modules/core/HeaderController.js"></script>
 
+    <script src="app/modules/core/LanguageService.js"></script>
+
     <!-- common -->
     <script src="app/modules/common/ActivityService.js"></script>
     <script src="app/modules/common/FontService.js"></script>
@@ -221,6 +191,7 @@
     <script src="app/modules/common/UserService.js"></script>
     <script src="app/modules/common/UtilityService.js"></script>
     <script src="app/modules/common/PhotoService.js"></script>
+    <script src="app/modules/common/AttachmentService.js"></script>
 
     <!-- home feature -->
     <script src="app/modules/home/HomeService.js"></script>
@@ -252,6 +223,10 @@
     <script src="app/modules/mobidul/station/creator/directives/elements/TriggerNearConfigDirective.js"></script>
     <script src="app/modules/mobidul/station/creator/directives/EditorToolsDirective.js"></script>
     <script src="app/modules/mobidul/station/creator/directives/elements/PhotoUploadConfigDirective.js"></script>
+    <script src="app/modules/mobidul/station/creator/directives/elements/SetTimeoutConfigDirective.js"></script>
+    <script src="app/modules/mobidul/station/creator/directives/elements/FreeTextInputConfigDirective.js"></script>
+    <script src="app/modules/mobidul/station/creator/directives/elements/ConfirmSocialConfigDirective.js"></script>
+    <script src="app/modules/mobidul/station/creator/directives/elements/ShowScoreConfigDirective.js"></script>
 
     <!-- station media feature -->
     <script src="app/modules/mobidul/station/media/MediaController.js"></script>
@@ -261,8 +236,7 @@
 
 
     <script>
-      if ( googleLoaded )
-      {
+      if (googleLoaded) {
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -277,9 +251,9 @@
 
         ga('create', 'UA-69167839-1', gaAuto);
         // ga('send', 'pageview');
-      }
-      else
+      } else {
         console.warn('Can\'t load GoogleAnalyticsObject because offline .');
+      }
     </script>
   </body>
 </html>

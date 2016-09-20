@@ -1,10 +1,11 @@
+/// Home
 angular
   .module('Home')
   .controller('HomeController', HomeController);
 
 
 HomeController.$inject = [
-  '$log', '$scope', '$rootScope', '$q',
+  '$log', '$scope', '$rootScope', '$q', '$translate',
   '$state', '$stateParams', 'StateManager',
   '$mdDialog',
   '$geolocation', 'MapService',
@@ -13,18 +14,14 @@ HomeController.$inject = [
 
 
 function HomeController (
-  $log, $scope, $rootScope, $q,
+  $log, $scope, $rootScope, $q, $translate,
   $state, $stateParams, StateManager,
   $mdDialog,
   $geolocation, MapService,
   HomeService, UserService, LocalStorageService
-)
-{
+) {
+  /// HomeController
   var home = this;
-
-  /// constants
-  home._searchPlaceholder = 'Mobidule in meiner Nähe durchsuchen';
-
 
   /// vars
   home.isCordovaIos = isCordova && isIos;
@@ -32,9 +29,7 @@ function HomeController (
   // home.hasPosition     = false;
   home.myPosition         = null;
   home.mobiduls           = [];
-  home.loading            = 'block';
-
-  home.searchPlaceholder  = home._searchPlaceholder;
+  home.isLoading          = true;
 
   home.searchTypeIndex    = ! StateManager.isHomeLogin()
                               ? ( $stateParams.type || HomeService.DEFAULT_SEARCH_TYPE )
@@ -71,35 +66,6 @@ function HomeController (
 
     LocalStorageService.init();
     LocalStorageService.explainNearGeoPermit(true);
-
-
-    // NOTE XXX - deprecated, since the initialization never requires a geo permit,
-    //        since ALL_MOBIDULE tab is defaultly opened !
-
-    // if ( home.searchTypeIndex == HomeService.NEAR_ME_MOBIDULE )
-    // {
-    //   var informAboutGeoPermitDialog =
-    //     $mdDialog
-    //       .alert()
-    //       .parent(angular.element(document.body))
-    //       .title('Information')
-    //       .textContent( MapService.EXPLAIN_GENERIC_GEO_PERMIT )
-    //       .ariaLabel('Information')
-    //       .ok('Ich verstehe');
-    //
-    //   $mdDialog
-    //     .show( informAboutGeoPermitDialog )
-    //     .then(function ()
-    //     {
-    //       home.getMyPosition()
-    //         .then(function (position)
-    //         {
-    //           home.changeSearchType();
-    //         });
-    //     });
-    // }
-
-    // ...
   }
 
 
@@ -114,16 +80,17 @@ function HomeController (
           path = '/MobidulNearMe/' +
               home.myPosition.coords.latitude + '/' +
               home.myPosition.coords.longitude;
+          home.searchPlaceholder = $translate.instant('HOME_SEARCH_PLACEHOLDER_NEAR');
         break;
 
       case 1 :
         path = '/GetNewestMobiduls';
-        home.searchPlaceholder = 'Alle Mobidule durchsuchen';
+        home.searchPlaceholder = $translate.instant('HOME_SEARCH_PLACEHOLDER_ALL');
         break;
 
       case 2 :
         path = '/MyMobiduls';
-        home.searchPlaceholder = 'Eigene Mobidule durchsuchen';
+        home.searchPlaceholder = $translate.instant('HOME_SEARCH_PLACEHOLDER_MINE');
         break;
 
       default :
@@ -172,27 +139,27 @@ function HomeController (
       .getCurrentPosition()
       .then(function (response)
       {
-        $log.debug('HomeController getCurrentPosition callback :');
-        $log.debug(response);
+        //$log.debug('HomeController getCurrentPosition callback :');
+        //$log.debug(response);
 
         if ( response.error )
         {
           var retryPossible = true;
-          var errorMessage  = MapService.UNKNOWN_ERROR_MSG;
+          var errorMessage  = $translate.instant('UNKNOWN_ERROR_MSG');
 
           switch ( response.error.code )
           {
             case MapService.PERMISSION_DENIED :
-              errorMessage  = MapService.PERMISSION_DENIED_MSG;
+              errorMessage  = $translate.instant('PERMISSION_DENIED_MSG');
               retryPossible = false;
               break;
 
             case MapService.POSITION_UNAVAILABLE :
-              errorMessage = MapService.POSITION_UNAVAILABLE_MSG;
+              errorMessage = $translate.instant('POSITION_UNAVAILABLE_MSG');
               break;
 
             case MapService.TIMEOUT :
-              errorMessage = MapService.TIMEOUT_MSG;
+              errorMessage = $translate.instant('TIMEOUT_MSG');
               break;
 
           }
@@ -201,17 +168,15 @@ function HomeController (
           if ( retryPossible )
           {
             var positionErrorDialog =
-              $mdDialog
-                .alert()
+              $mdDialog.alert()
                 .parent(angular.element(document.body))
-                .title('Position Fehler')
+                .title($translate.instant('POSITION_ERROR_TITLE'))
                 .textContent(errorMessage)
-                .ariaLabel('Position Fehler')
-                .ok('Nochmal versuchen')
-                .cancel('Abbrechen');
+                .ariaLabel($translate.instant('POSITION_ERROR_TITLE'))
+                .ok($translate.instant('TRY_AGAIN'))
+                .cancel($translate.instant('CANCEL'));
 
-            $mdDialog
-              .show( positionErrorDialog )
+            $mdDialog.show( positionErrorDialog )
               .then(function ()
               {
                 home.getMyPosition()
@@ -228,16 +193,14 @@ function HomeController (
           else
           {
             var positionErrorDialog =
-              $mdDialog
-                .alert()
+              $mdDialog.alert()
                 .parent(angular.element(document.body))
-                .title('Position Fehler')
+                .title($translate.instant('POSITION_ERROR_TITLE'))
                 .textContent( errorMessage )
-                .ariaLabel('Position Fehler')
-                .ok('Zu alle Mobidule');
+                .ariaLabel($translate.instant('POSITION_ERROR_TITLE'))
+                .ok($translate.instant('BACK_TO_MOBIDULS'));
 
-            $mdDialog
-              .show( positionErrorDialog )
+            $mdDialog.show( positionErrorDialog )
               .then(function ()
               {
                 home.searchTypeIndex = HomeService.ALL_MOBIDULE;
@@ -269,11 +232,11 @@ function HomeController (
 
   function changeSearchType ()
   {
-    $log.debug('changeSearchType called at tab index :');
-    $log.debug(home.searchTypeIndex);
+    //$log.debug('changeSearchType called at tab index :');
+    //$log.debug(home.searchTypeIndex);
 
-    home.mobiduls = [];
-    home.loading  = 'block';
+    home.mobiduls  = [];
+    home.isLoading = true;
 
     if (
       home.searchTypeIndex == HomeService.NEAR_ME_MOBIDULE &&
@@ -281,39 +244,34 @@ function HomeController (
       LocalStorageService.shouldExplainNearGeoPermit()
     ) {
       var informAboutGeoPermitDialog =
-        $mdDialog
-          .alert()
+        $mdDialog.alert()
           .parent(angular.element(document.body))
-          .title('Information')
-          .textContent( MapService.EXPLAIN_NEAR_GEO_PERMIT )
-          .ariaLabel('Information')
-          .ok('OK');
+          .title($translate.instant('INFORMATION'))
+          .textContent($translate.instant('EXPLAIN_NEAR_GEO_PERMIT'))
+          .ariaLabel($translate.instant('INFORMATION'))
+          .ok($translate.instant('OK'));
 
-      $mdDialog
-        .show( informAboutGeoPermitDialog )
-        .then(function ()
-        {
-          LocalStorageService.explainNearGeoPermit(false);
+      $mdDialog.show( informAboutGeoPermitDialog )
+      .then(function () {
+        LocalStorageService.explainNearGeoPermit(false);
 
-          home.getMyPosition()
-            .then(function (position)
-            {
-              _switchSearchType();
-            });
-        });
-    }
-    else
+        home.getMyPosition()
+          .then(function (position)
+          {
+            _switchSearchType();
+          });
+      });
+    } else {
       _switchSearchType();
+    }
   }
 
 
-  function checkRequiredLogin ()
-  {
+  function checkRequiredLogin () {
     // $log.debug('check required login');
     // $log.debug(home.searchTypeIndex);
 
-    if ( home.searchTypeIndex == HomeService.MY_MOBIDULE )
-    {
+    if ( home.searchTypeIndex == HomeService.MY_MOBIDULE ) {
       // $log.debug(UserService.Session);
 
       var  requiredLogin = ! UserService.Session.isLoggedIn;
@@ -322,9 +280,7 @@ function HomeController (
 
       if ( requiredLogin )
         $state.go('home.login');
-    }
-    else
-    {
+    } else {
       home.requiredLogin = false;
 
       // TODO - check if this is necessary
@@ -337,37 +293,29 @@ function HomeController (
   {
     // $log.debug('> HomeController loading : ' + path);
 
-    HomeService
-      .getMobiduls( cordovaUrl + path )
-      .success(function (data, status, headers, config)
-      {
-        // $log.debug('HomeController loadMobiduls callback :');
-        // $log.debug(data);
+    HomeService.getMobiduls( cordovaUrl + path )
+    .success(function (data, status, headers, config) {
+      // $log.debug('HomeController loadMobiduls callback :');
+      // $log.debug(data);
 
-        var mobidulsData = home.prepareMobidulsData( data );
+      var mobidulsData = home.prepareMobidulsData( data );
 
-        // NOTE - save mobiduls data to show
-        home.mobiduls = mobidulsData;
-      })
-      .error(function (data, status, headers, config)
-      {
-        $log.error(data);
-        $log.error(status);
-      })
-      .then(function ()
-      {
-        // $log.debug('Load Mobiduls callback :');
-        // $log.debug(home.loading);
+      // NOTE - save mobiduls data to show
+      home.mobiduls = mobidulsData;
+    })
+    .error(function (data, status, headers, config) {
+      $log.error(data);
+      $log.error(status);
+    })
+    .then(function () {
+      home.isLoading = false;
 
-        home.loading = 'none';
-
-        $rootScope.$emit('rootScope:toggleAppLoader', { action : 'hide' });
-      });
+      $rootScope.$emit('rootScope:toggleAppLoader', { action : 'hide' });
+    });
   }
 
 
-  function prepareMobidulsData (data)
-  {
+  function prepareMobidulsData (data) {
     for ( var i = 0; i < data.length; i++ )
     {
       // $log.debug(data[ i ].name);
@@ -418,10 +366,15 @@ function HomeController (
 
   function switchToCreator ()
   {
-    $state.go('mobidul.creator.basis',
-    {
-      mobidulCode : StateManager.NEW_MOBIDUL_CODE
-    });
+    if ( ! UserService.Session.isLoggedIn ) {
+      var stateParams = StateManager.state.params;
+      $state.go(StateManager.LOGIN, stateParams);
+    } else {
+      $state.go('mobidul.creator.basis',
+        {
+          mobidulCode: StateManager.NEW_MOBIDUL_CODE
+        });
+    }
   }
 
   function switchToPlay ()

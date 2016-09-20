@@ -34,6 +34,7 @@ function StationCreatorService (
     addStation           : addStation,
     saveStation          : saveStation,
     deleteStation        : deleteStation,
+    cloneMyStation       : cloneMyStation,
     updateStationContent: updateStationContent
   };
 
@@ -67,6 +68,23 @@ function StationCreatorService (
     return $http.get(cordovaUrl + '/' + mobidulCode + '/RemoveStationByCode/' + stationCode);
   }
 
+  /**
+   * This function calls the Server in order to clone the current Station. It also contains the ID of the new station.
+   * @param mobidulCode Code of the Mobidul the station belongs to.
+   * @param stationCode Code of the Station that will be duplicated.
+   * @returns {*} Call of the Server
+   */
+  function cloneMyStation(mobidulCode, stationCode) {
+
+    return $http.get(cordovaUrl + '/' + mobidulCode + '/cloneStation/' + stationCode)
+      .success(function (response, status, headers, config) {
+      return response;
+    })
+      .error(function (response, status, headers, config) {
+        $log.error(response);
+        $log.error(status);
+      });
+  }
 
   return service;
 }

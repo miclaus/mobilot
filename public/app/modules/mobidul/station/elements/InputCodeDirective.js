@@ -5,13 +5,15 @@ angular
   .module('Mobidul')
   .directive('mblInputCode', InputCode);
 
+
 InputCode.$inject = [
-  '$log', '$rootScope',
+  '$log', '$translate', '$rootScope',
   'ActivityService'
 ];
 
+
 function InputCode (
-  $log, $rootScope,
+  $log, $translate, $rootScope,
   ActivityService
 ) {
   return {
@@ -22,72 +24,73 @@ function InputCode (
       error: '@',
       id: '@'
     },
-    template: (
+    template: '' +
       '<div>' +
-        '<form ng-submit="ctrl.submit()">' +
+        '<form ng-submit="inputCode.submit()">' +
           '<md-input-container>' +
             '<input ' +
-              'ng-model="ctrl.code" ' +
-              'data-success="success" ' +
-              'data-error="error">' +
-            '</input>' +
+              'ng-model="inputCode.code"/>' +
           '</md-input-container>' +
 
           '<md-button ' +
             'type="submit" ' +
-            'class="md-raised md-primary"' +
-          '>Go</md-button>' +
+            'class="md-raised md-primary" ' +
+          '>{{ \'GO\' | translate }}</md-button>' +
         '</form>' +
       '</div>'
-    ),
+    ,
 
-    link: function ($scope, $element, $attrs, ctrl) {
+    link: function ($scope, $element, $attrs, InputCode) {
       // ...
     },
 
-    controller: function ($scope, $element, $attrs) {
-      var ctrl = this;
+    controller: InputCodeController,
+    controllerAs: 'inputCode'
+  }
 
-      ctrl.submit = submit;
 
-      function submit () {
-        if (ctrl.code) {
-          var code = ctrl.code.toLowerCase();
-          var verifier = $scope.verifier.toLowerCase();
 
-          var payload = {
-            inputCodeId: $scope.id,
-            code: code,
-            verifier: verifier
-          };
+  function InputCodeController (
+    $scope, $element, $attrs
+  ) {
+    var inputCode = this;
 
-          // Check if the given code matches the verifier
-          if ( code === verifier ) {
-            ActivityService.commitActivity({
-              type: ActivityService.TYPES.USER_ACTION,
-              name: ActivityService.USER_ACTIONS.INPUTCODE_SUCCESS,
-              payload: payload
-            });
+    inputCode.submit = submit;
 
-            $rootScope.$broadcast('action', $scope.success);
-          }
-          else {
-            ActivityService.commitActivity({
-              type: ActivityService.TYPES.USER_ACTION,
-              name: ActivityService.USER_ACTIONS.INPUTCODE_ERROR,
-              payload: payload
-            });
+    function submit () {
+      if ( inputCode.code ) {
+        var code = inputCode.code.toLowerCase();
+        var verifier = $scope.verifier.toLowerCase();
 
-            $rootScope.$broadcast('action', $scope.error);
-          }
+        var payload = {
+          inputCodeId: $scope.id,
+          code: code,
+          verifier: verifier
+        };
 
-          // TODO: find a better place for pushing the activity
-          // maybe $on('action', ...) ?
-          ActivityService.pushActivity();
+        // Check if the given code matches the verifier
+        if ( code === verifier ) {
+          ActivityService.commitActivity({
+            type: ActivityService.TYPES.USER_ACTION,
+            name: ActivityService.USER_ACTIONS.INPUTCODE_SUCCESS,
+            payload: payload
+          });
+
+          $rootScope.$broadcast('action', $scope.success);
+        } else {
+          ActivityService.commitActivity({
+            type: ActivityService.TYPES.USER_ACTION,
+            name: ActivityService.USER_ACTIONS.INPUTCODE_ERROR,
+            payload: payload
+          });
+
+          $rootScope.$broadcast('action', $scope.error);
         }
+        
+        ActivityService.pushActivity();
       }
-    },
-    controllerAs: 'ctrl'
+    }
   }
 }
+
 })();

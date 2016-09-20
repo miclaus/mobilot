@@ -1,17 +1,22 @@
 <?php
 
-use App\Models\Station;
+use App\Models\Attachment;
 use App\Models\Category;
 use App\Models\Category2Station;
 use App\Models\Mobidul;
 use App\Models\NavigationItem;
+use App\Models\Station;
 use App\Models\User;
 use App\Models\User2Mobidul;
-use App\Models\Attachment;
 
 
 class WebServicesController extends BaseController
 {
+  /// fields
+  private $maxCodeCharLimit = 20;
+
+
+  /// public functions
 
   public function isMobidulCodeProtected ($name)
   {
@@ -24,7 +29,8 @@ class WebServicesController extends BaseController
         "GetCategories",      "GetMobiduls",              "GetContent",
         "GetStation",         "GetCategoriesForStation",  "Play",
         "CanPlay",            "NewMobidul",               "UpdateMobidul",
-        "PushActivity",       "CloneMobidul",             "exportImages",
+        "PushActivity",       "CloneMobidul",             "CloneStation",
+        "exportImages",       "GenerateMobidulCode",
         "AddCategories",      "UpdateCategories",         "RemoveCategories",
         "AddStation",         "RemoveCategory",           "SetStation",
         "RemoveStation",      "RemoveStationByCode",      "GetContentForCode",
@@ -47,8 +53,7 @@ class WebServicesController extends BaseController
   }
 
 
-  public function GenerateStationCode ($stationCode = null)
-  {
+  public function GenerateStationCode ($stationCode = null) {
     // \Log::info('GenerateStationCode');
 
     $maybeStationCode = $stationCode;
@@ -57,22 +62,132 @@ class WebServicesController extends BaseController
 
     $exists = true;
 
-    while ( $exists )
-    {
+    while ($exists) {
       $exists = Station::findByCode($newStationCode);
 
-      if ( $exists )
-      {
+      if ($exists) {
+        // TODO: Add code length checking
         $newStationCode = $maybeStationCode . $appendCounter;
         $appendCounter++;
-      }
-      else
+      } else {
         break;
+      }
     }
 
     return $newStationCode;
   }
 
+
+  public function GenerateMobidulCode ($mobidulName) {
+    // \Log::info('GenerateMobidulCode: ');
+
+    $maybeMobidulCode = $this->getCodeFromName($mobidulName);
+    $newMobidulCode = clone $maybeMobidulCode;
+    $appendCounter = 2;
+
+    $exists = true;
+
+    while ($exists) {
+      $exists = Station::findByCode($newMobidulCode);
+
+      if ($exists) {
+        // Checks whether the length of the maybe-code plus the appended counter
+        // is not longer than the max code char limit and cuts the surplus
+        // before appending the counter
+        $totalLength = count($maybeMobidulCode) + strlen((string)$appendCounter);
+
+        if ( $totalLength > $this->maxCodeCharLimit ) {
+          $lengthSurplus = $this->maxCodeCharLimit - $totalLength;
+          $negLengthSurplus = -1 * $lengthSurplus;
+          $maybeStationCode = substr($maybeStationCode, 0, $negLengthSurplus);
+        }
+
+        $newMobidulCode = $maybeStationCode . $appendCounter;
+        $appendCounter++;
+      } else {
+        break;
+      }
+    }
+
+    return $newMobidulCode;
+  }
+
+
+  /**
+   * This function allows to change various fields in the Mobidul table.
+   * Depending on the modifier the respective field values are changed
+   * by incrementing the number.
+   *
+   * @param $valueToChange  The value that needs to be changed
+   * @param $modifier What type of value it is
+   * @return null|string If changed the new value is returned otherwise the old one
+   */
+  public function ChangeMobidulData ($valueToChange = null, $modifier = null) {
+    $maybeMobidulValue = $valueToChange;
+    $newMobidulValue = $valueToChange;
+    $appendCounter = 2;
+    $exists = true;
+
+    while ($exists) {
+      switch ($modifier) {
+        case 'code':
+          $exists = Mobidul::findByCode($newMobidulValue);
+          break;
+        case 'name':
+          $exists = Mobidul::where('name', $newMobidulValue)->first();
+          break;
+        // Implement further cases here
+        default:
+          break;
+      }
+
+      if ($exists) {
+        $newMobidulValue = $maybeMobidulValue . '_' . $appendCounter;
+        $appendCounter++;
+      } else {
+        break;
+      }
+    }
+
+    return $newMobidulValue;
+  }
+
+  /**
+   * This function allows the change of various fields in the Station table. Depending on the modifier the respective
+   * fields values is changed by adding a incrementing number to it.
+   * @param null $valueToChange The value that needs to be changed
+   * @param null $modifier What type of value it is
+   * @return null|string If changed the new value is returned otherwise the old one
+   */
+  public function ChangeStationData($valueToChange = null, $modifier = null) {
+    $maybeStationValue = $valueToChange;
+    $newStationValue = $valueToChange;
+    $appendCounter = 2;
+    $exists = true;
+
+    while($exists) {
+      switch ($modifier) {
+        case 'code':
+          $exists = Station::findByCode($newStationValue);
+          break;
+        case 'name':
+          $exists = Station::where('name', $newStationValue)->first();
+          break;
+        //... Implement further cases here
+        default:
+          break;
+      }
+
+      if($exists) {
+        $newStationValue = $maybeStationValue . $appendCounter;
+        $appendCounter++;
+      } else {
+        break;
+      }
+    }
+
+    return $newStationValue;
+  }
 
   public function GetForCode ($mobidulCode, $stationCode)
   {
@@ -131,24 +246,19 @@ class WebServicesController extends BaseController
 
   public function GetForCategoryId ($mobidulCode, $categoryId)
   {
-    $mobidulId  = Mobidul::GetId($mobidulCode);
+    $mobidulId = Mobidul::GetId($mobidulCode);
 
-    $stationIds = DB::table('category2station')
-                    ->select('stationId')
-                    ->where('categoryId', $categoryId)
-                    ->get();
-
-    $station = DB::table('station')
-                  ->select(
-                    'id', 'code', 'lat', 'lon',
-                    'name', 'type', 'order', 'station.updated_at'
-                  )
-                  ->join('category2station', 'station.id', '=', 'category2station.stationId')
-                  ->where('category2station.categoryId', $categoryId)
-                  ->where('mobidulId', $mobidulId)
-                  // ->orderBy('name')
-                  ->orderBy('order')
-                  ->get();
+    $station =
+    DB::table('station')
+      ->select(
+       'id', 'code', 'lat', 'lon',
+       'name', 'type', 'order', 'station.updated_at'
+      )
+      ->join('category2station', 'station.id', '=', 'category2station.stationId')
+      ->where('category2station.categoryId', $categoryId)
+      ->where('mobidulId', $mobidulId)
+      ->orderBy('order')
+      ->get();
 
 
     return json_encode($station);
@@ -217,7 +327,6 @@ class WebServicesController extends BaseController
 
     return $result;
   }
-
 
   public function GetOptions ($mobidulCode)
   {
@@ -365,7 +474,7 @@ class WebServicesController extends BaseController
     if ( $this->isMobidulCodeProtected($code) )
       return $response = [
         'success' => false,
-        'msg'     => 'Dieses Mobidul Code ist geschützt und kann nicht verändert werden!'
+        'msg'     => 'WSC_MOBIDUL_PROTECTED'
       ];
 
 
@@ -394,14 +503,14 @@ class WebServicesController extends BaseController
 
       return $response = [
         'success' => true,
-        'msg'   => 'Glückwunsch! Dein Mobidul wurde erfolgreich erstellt.',
+        'msg'   => 'WSC_MOBIDUL_SUCCESS',
         'code'  => $code
       ];
     }
     else
       return $response = [
         'success' => false,
-        'msg'   => 'Dieses Mobidul Code ist schon vergeben! Bitte versuche einen anderen Code.'
+        'msg'   => 'WSC_MOBIDUL_IN_USE'
       ];
   }
 
@@ -458,7 +567,7 @@ class WebServicesController extends BaseController
 
         return [
           'success' => true,
-          'msg'   => 'Mobidul wurde erfolgreich gelöscht. Wir würden uns freuen dich wieder zu sehen!'
+          'msg'   => 'WSC_MOBIDUL_DELETE'
         ];
       }
       catch (\Laravel\Database\Exception $e)
@@ -467,13 +576,13 @@ class WebServicesController extends BaseController
         DB::statement('SET FOREIGN_KEY_CHECKS = 1');
 
         $exMarker = uniqid();
-        Log::info('Exeption uniqid : ' . $exMarker);
+        Log::info('Exception uniqid : ' . $exMarker);
         Log::exception($e);
 
 
         return [
           'success' => false,
-          'msg'   => 'Mobidul konnte nicht gelöscht werden. Bitte informieren Sie einen Administrator über den unbekannten Fehler (' . $exMarker . ').'
+          'msg'   => 'WSC_MOBIDUL_NO_DELETE' . $exMarker
         ];
       }
     }
@@ -481,7 +590,7 @@ class WebServicesController extends BaseController
     {
       return [
       'success' => false,
-      'msg'   => 'Sie haben nicht die notwendigen Berechtigungen, um dieses Mobidul zu löschen.'
+      'msg'   => 'WSC_MOBIDUL_NO_DEL_RIGHTS'
       ];
     }
   }
@@ -540,20 +649,20 @@ class WebServicesController extends BaseController
    * @param $mobidulCode
    * @return array('exists' -> boolean, 'mobidulCode' -> string)
    */
-  public function checkMobidulCode ($mobidulCode)
-  {
+  public function checkMobidulCode ($mobidulCode) {
     $name = $this->mobidulExists($mobidulCode);
 
-    if ( $this->isMobidulCodeProtected($mobidulCode) || $name['exists'] )
-      return array(
-        'exists'      => true,
+    if ( $this->isMobidulCodeProtected($mobidulCode) || $name['exists'] ) {
+      return [
+        'exists' => true,
         'mobidulCode' => $mobidulCode
-      );
-    else
-      return array(
-        'exists'      => false,
+      ];
+    } else {
+      return [
+        'exists' => false,
         'mobidulCode' => $mobidulCode
-      );
+      ];
+    }
   }
 
   /**
@@ -585,7 +694,7 @@ class WebServicesController extends BaseController
 
     $response = [
       'success' => false,
-      'msg'   => 'Du hast nicht die notwendigen Berechtigungen dieses Mobidul zu aktualisieren!'
+      'msg'   => 'WSC_MOBIDUL_NO_RIGHTS'
     ];
 
     if ( $this->GetIsOwnerOfMobidul($mobidulCode) )
@@ -611,27 +720,246 @@ class WebServicesController extends BaseController
 
         $response = [
           'success' => true,
-          'msg'   => 'Mobidul wurde aktualisiert.'
+          'msg'   => 'WSC_MOBIDUL_UPDATED'
         ];
       }
       else
         $response = [
           'success' => false,
-          'msg'   => 'Mobidul konnte nicht aktualisiert werden!'
+          'msg'   => 'WSC_MOBIDUL_NOT_UPDATED'
         ];
     }
 
     return $response;
   }
-
-
+  
+  
+  /**
+   * This function duplicates a mobidul in the database and all it's subtables by the given mobidulcode.
+   * @param $mobidulCode Code of the old mobidul which is duplicated
+   * @return array With response whether the the cloning was successful or not
+   */
   public function CloneMobidul ($mobidulCode)
   {
-    $mobidul = Mobidul::findByCode($mobidulCode);
 
-    return $mobidul->name;
+    $response = [
+      'msg' => "Couldn't clone Mobidul.",
+      'success' => false
+    ];
+  
+    $request = Request::instance();
+    $content = $request->getContent();
+    $mobidulJson = json_decode($content);
+
+    $mobidulCode = $mobidulJson->oldCode;
+    $mobidulNameFromUser = $mobidulJson->name;
+    $mobidulCodeFromUser = $mobidulJson->code;
+
+    //START of the replication process if User is allowed or owner
+    if ( $this->CanUserCloneMobidul() ) {
+      $mobidul = Mobidul::findByCode($mobidulCode);
+
+      if ($mobidul) {
+        $mobidulId = Mobidul::GetId($mobidulCode);
+
+        // FIRST: Read all the relevant tables after the mobidul was found
+        $navigationOC = NavigationItem::where('mobidulId', $mobidulId)->get();
+        $stationOC = Station::where('mobidulId', $mobidulId)->get();
+        $userOC = User2Mobidul::where('mobidulId', $mobidulId)->first();
+//      $codesOC = Codes::where('mobidulId', $mobidulId)->get();
+//      $attachmentOC = Attachment::where('mobidulId', $mobidulId)->get();
+//      $categoryOC = Category::where('mobidulId', $mobidulId)->get();
+
+        // SECOND: Before cloning the other tables and relating them to Mobidul the Mobidul hast to be replicated
+        $clonedMobidul = $mobidul->replicate();
+
+        if ($mobidulCodeFromUser) {
+          $clonedMobidulCode = $mobidulCodeFromUser;
+        } else {
+          $clonedMobidulCode = $clonedMobidul->code;
+        }
+        if (strlen($clonedMobidulCode) > 19) {
+          $clonedMobidulCode = substr($clonedMobidulCode, 0, -1);
+          $clonedMobidul->code = $this->ChangeMobidulData($clonedMobidulCode, "code");
+        } else {
+          $clonedMobidul->code = $this->ChangeMobidulData($clonedMobidulCode, "code");
+        }
+
+        if ($mobidulNameFromUser) {
+          $clonedMobidulName = $mobidulNameFromUser;
+        } else {
+          $clonedMobidulName = $clonedMobidul->name;
+        }
+        if (strlen($clonedMobidulName) > 19) {
+          $clonedMobidulName = substr($clonedMobidulName, 0, -1);
+          $clonedMobidul->name = $this->ChangeMobidulData($clonedMobidulName, "name");
+        } else {
+          $clonedMobidul->name = $this->ChangeMobidulData($clonedMobidulName, "name");
+        }
+
+        $clonedMobidul->save();
+
+        ////////////////////////////////////////////
+        // !!IMPORTANT!! USED IN ALL OTHER CLONES //
+        ////////////////////////////////////////////
+        $clonedMobidulID = $clonedMobidul->id;     //Save the ID of the cloned Mobidul
+
+        // THIRD: Clone now the rest of the current Mobidul and relate it to the new cloned one
+        // THIRD - A: Insert the new user2Mobidul with same rights as userOC (user of current mobidul)
+        DB::table('user2mobidul')->insert(
+          [
+            'userId' => $userOC->userId,
+            'mobidulId' => $clonedMobidulID,
+            'rights' => $userOC->rights,
+            'created_at' => $userOC->created_at,
+            'updated_at' => $userOC->updated_at,
+            'code' => $userOC->code
+          ]);
+
+        // THIRD - B: Replicate first the navigation items of the current Mobidul
+        if (count($navigationOC) > 0) {
+          foreach ($navigationOC as $navigation) {
+            $clonedNavigation = $navigation->replicate();
+            $clonedNavigation->mobidulId = $clonedMobidulID;
+            $clonedNavigation->save();
+          }
+        }
+        
+        // THIRD - C: Replicate the stations for the current Mobidul and other related tables
+        /*
+         * Important as it stores the cloned Categories and checks if they already exist so if one station is assigned
+         * to multiple categories, the categories won't get duplicated. Each time is checked if the clone category already
+         * exists and if so, the cloned category from this list is used.
+         */
+        $clonedCategoryExists = array();
+        
+        if (count($stationOC) > 0) {
+          foreach ($stationOC as $station) {
+            $clonedStation = $station->replicate();
+            $clonedStation->mobidulId = $clonedMobidulID;
+            $clonedStationCode = $clonedStation->code;
+            if(strlen($clonedStationCode) > 19) {
+              $clonedStationCode = substr($clonedStationCode, 0, -1);
+              $clonedStation->code = $this->ChangeStationData($clonedStationCode, "code");
+            } else {
+              $clonedStation->code = $this->ChangeStationData($clonedStationCode, "code");
+            }
+            $clonedStation->save();
+
+            $stationId = $station->id;
+            $category2StationOC = Category2Station::where('stationId', $stationId)->get();
+
+            foreach ($category2StationOC as $cat2Station) {
+              $categoryOC = Category::where('id', $cat2Station->categoryId)->first();
+              $checkCategory = $this->CategoryExists($clonedCategoryExists, $categoryOC->name);
+              if ($checkCategory) {
+                $clonedCategory = $this->GetCategoryByName($clonedCategoryExists, $categoryOC->name);
+              } else {
+                $clonedCategory = $categoryOC->replicate();
+                $clonedCategory->mobidulId = $clonedMobidulID;
+                $clonedCategory->save();
+                
+                array_push($clonedCategoryExists, $clonedCategory);
+              }
+              
+              DB::table('category2station')->insert(
+                [
+                  'categoryId' => $clonedCategory->id,
+                  'stationId' => $clonedStation->id
+                ]);
+              
+              
+              $navCategory = NavigationItem::where('mobidulId', $clonedMobidulID)->where('categoryId', $categoryOC->id)->first();
+              $navStation = NavigationItem::where('mobidulId', $clonedMobidulID)->where('stationId', $stationId)->first();
+
+              if($navCategory) {
+                $navCategory->categoryId = $clonedCategory->id;
+                $navCategory->save();
+              }
+              if($navStation) {
+                $navStation->stationId = $clonedStation->id;
+                $navStation->save();
+              }
+            }
+          }
+        }
+  
+  
+        //THIRD - D: Duplicate the categories that are not related to any station
+        $categoryOC = Category::where('mobidulId', $mobidulId)->get();
+        if (count($categoryOC) > 0) {
+          foreach ($categoryOC as $category) {
+            if(empty($this->HasCategory2StationId($category->id))) {
+              $clonedCategory = $category->replicate();
+              $clonedCategory->mobidulId = $clonedMobidulID;
+              $clonedCategory->save();
+            }
+          }
+        }
+
+
+        $response = [
+          'msg' => "Successfully cloned the current Mobidul.",
+          'success' => true
+        ];
+      }
+    }
+    return $response;
   }
 
+  /**
+   * This function is used in order to clone a specific station by its code and Mobidul code.
+   * @param $mobidulCode Mobidul code where the station belongs to
+   * @param $stationCode Code of the station that should be cloned
+   * @return array With information about the status or if it worked or not
+   */
+  public function CloneStation ($mobidulCode, $stationCode)
+  {
+    $response = [
+      'msg' => "Couldn't clone Station.",
+      'success' => false,
+      'stationCode' => $stationCode
+    ];
+
+    if ($this->CanUserCloneMobidul()) {
+      $mobidulId = Mobidul::GetId($mobidulCode);
+      $stationOC = Station::where("code", "=", $stationCode)->where("mobidulId", "=", $mobidulId)->first();
+
+      if ($stationOC) {
+        $clonedStation = $stationOC->replicate();
+        $clonedStationCode = $clonedStation->code;
+        $clonedStationName = $clonedStation->name;
+        
+        //This is used to change the name and code of the station if already existent. Also if the name would be
+        //too long it gets shortened in order to generate a new code.
+        if(strlen($clonedStationCode) > 19) {
+          $clonedStationCode = substr($clonedStationCode, 0, -1);
+          $clonedStation->code = $this->ChangeStationData($clonedStationCode, "code");
+        } else {
+          $clonedStation->code = $this->ChangeStationData($clonedStationCode, "code");
+        }
+
+        if(strlen($clonedStationName) > 19) {
+          $clonedStationName = substr($clonedStationName, 0, -1);
+          $clonedStation->name = $this->ChangeStationData($clonedStationName, "name");
+        } else {
+          $clonedStation->name = $this->ChangeStationData($clonedStationName, "name");
+        }
+        
+        $allStationsOfMobidul = Station::where('mobidulId', $mobidulId)->get();
+        $clonedStation->order = $clonedStation->order + count($allStationsOfMobidul) - 1;
+        $clonedStation->save();
+        $codeOfNewStation = $clonedStation->code;
+
+        $response = [
+          'msg' => "Successfully cloned station with ID: " . $codeOfNewStation,
+          'success' => true,
+          'stationCode' => $codeOfNewStation
+        ];
+      }
+    }
+    return $response;
+  }
 
   public function GetOwnerOfMobidul ($mobidulCode)
   {
@@ -733,7 +1061,7 @@ class WebServicesController extends BaseController
 
       return DB::table('user2mobidul')
                 ->where('userId', $userid)
-                ->whereIn('rights', array(1, 2))
+                ->whereIn('rights', [1, 2])
                 ->leftJoin('mobidul', 'mobidul.Id', '=', 'user2mobidul.mobidulId')
                 ->select('id', 'name', 'description', 'mobidul.code', 'background', 'foreground', 'rights')
                 ->get();
@@ -1531,6 +1859,12 @@ class WebServicesController extends BaseController
              ->first();
   }
 
+  public function HasCategory2StationId ($categoryId) {
+    return DB::table('category2station')
+      ->select('categoryId')
+      ->where('categoryId', $categoryId)
+      ->get();
+  }
 
   public function IsAllowed ($mobidulCode)
   {
@@ -1634,7 +1968,102 @@ class WebServicesController extends BaseController
     return 'not-allowed';
   }
 
+  /**
+   * This function is used in order to check whether the category exists or not.
+   * @param $array The array where it checks whether the name is contained or not
+   * @param $name The name to find
+   * @return bool true if found otherwise false
+   */
+  public function CategoryExists ($array, $name) {
+    foreach ($array as $elem) {
+      if($elem->name === $name) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * This function is used to return the category in the given array by it's name.
+   * @param $array where the Category gets extracted from
+   * @param $name name of the category to extract
+   * @return null or category is returned if found
+   */
+  public function GetCategoryByName ($array, $name) {
+    foreach ($array as $elem) {
+      if($elem->name === $name) {
+        return $elem;
+      }
+    }
+    return null;
+  }
+  
+  /**
+   * This function checks whether the user is allowed to clone the current mobidul or not.
+   * @return bool information if the user can clone or not
+   */
+  public function CanUserCloneMobidul () {
+    $user2Mobidul = null;
+
+    if ( Auth::check() ) {
+      $userid = Auth::id();
+
+      $user2Mobidul = DB::table('user2mobidul')
+      ->where('userId', $userid)
+      ->whereIn('rights', [1, 2])
+      ->get();
+    }
+
+    return !!$user2Mobidul;
+  }
+
+  public function updateDB () {
+
+    $stations = Station::all();
+
+    foreach ($stations as $station) {
+
+      $json = json_decode($station->content);
+
+      // data from before rally mode
+      if (is_null($json)) {
+        $station->content = "{\"OPEN\":[{\"type\":\"HTML\",\"content\":\"". preg_replace("/\r|\n/", '<br>', $station->content) ."\"}]}";
+      } else {
+        // replace old keys with new uppercase version
+        $old = array("activated", "openThis", "open", "completed", "html", "button", "ifNear", "inputCode", "completeThisAndShowNext", "completeThis", "say", "goToCurrent", "setState", "verifyIfNear");
+        $new = array("ACTIVATED", "OPEN_THIS", "OPEN", "COMPLETED", "HTML", "BUTTON", "IF_NEAR", "INPUT_CODE", "COMPLETE_THIS_AND_SHOW_NEXT", "COMPLETE_THIS", "SAY", "GO_TO_CURRENT", "SET_STATE", "VERIFY_IF_NEAR");
+        $station->content = str_replace($old, $new, $station->content);
+      }
+
+      $station->save();
+    }
+
+    return "finished";
+  }
+
+
+
+
+
+  /// private functions
+
+  private function getCodeFromName ($mobidulName = null) {
+    $code = $mobidulName || '';
+
+    // make code lower case
+    $code = mb_strtolower($code);
+    // replace everything but (lower case) letters and numbers
+    $code = preg_replace('/[^a-z0-9]äöü/g', '', $code);
+    $umlautSearch = [ '/ä/g', '/ö/g', '/ü/g' ];
+    $umlautReplacement = [ 'ae', 'oe', 'ue' ];
+    $code = preg_replace($umlautSearch, $umlautReplacement, $code);
+    // trim string
+    $code = trim($code);
+    // limit the code to <n> chars
+    $code = substr($code, 0, $this->maxCodeCharLimit);
+
+    return $code;
+  }
 
   // ...
-
 }

@@ -1,0 +1,71 @@
+<md-dialog>
+  <md-toolbar>
+    <div class="md-toolbar-tools">
+      <h2 translate="CLONE_MOBIDUL"></h2>
+      <span flex></span>
+      <md-button
+        class="md-icon-button"
+        ng-click="cloneMobidulDialog.close()"
+      >
+        <md-icon>close</md-icon>
+      </md-button>
+    </div>
+  </md-toolbar>
+
+  <md-dialog-content>
+    <md-content layout-padding>
+      <div layout="column">
+        <p class="helper" translate="ENTER_NEW_MOBIDUL_NAME"></p>
+        <br>
+
+        <md-input-container>
+          <label translate="MOBIDUL_NAME"></label>
+          <input
+            ng-model="cloneMobidulDialog.mobidul.name"
+            ng-keyup="cloneMobidulDialog.changeName()"
+            required
+          >
+        </md-input-container>
+      </div>
+
+      <div layout="column">
+        <md-input-container flex>
+          <label>
+            <span translate="MOBIDUL_CODE"></span>
+            <span ng-show="cloneMobidulDialog.mobidul.codeHelper.show">
+              - {{ cloneMobidulDialog.mobidul.codeHelper.text }}
+            </span>
+          </label>
+
+          <input
+            ng-model="cloneMobidulDialog.mobidul.code"
+            ng-keyup="cloneMobidulDialog.changeCode()"
+            maxlength="20"
+            required
+          >
+        </md-input-container>
+
+        <p class="helper" translate="MOBIDUL_LINK_WILL_BE"></p>
+        <p class="url-helper">
+          <span>{{ cloneMobidulDialog.mobidul.link }}</span>
+          <span>/#/</span>
+          <span>{{ cloneMobidulDialog.mobidul.code }}</span>
+        </p>
+      </div>
+    </md-content>
+  </md-dialog-content>
+
+  <md-dialog-actions>
+    <md-button
+      ng-click="cloneMobidulDialog.close()"
+      class="md-primary md-mobilot-color"
+      translate="CANCEL"
+    ></md-button>
+
+    <md-button
+      ng-click="cloneMobidulDialog.cloneMobidul()"
+      class="md-raised md-primary md-mobilot"
+      translate="CLONE"
+    ></md-button>
+  </md-dialog-actions>
+</md-dialog>

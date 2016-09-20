@@ -4,8 +4,8 @@
 
 angular
   .module('Mobilot')
-  .config([   '$logProvider', '$stateProvider', '$urlRouterProvider',
-    function ( $logProvider,   $stateProvider,   $urlRouterProvider )
+  .config([   '$logProvider', '$stateProvider', '$urlRouterProvider', '$translateProvider',
+    function ( $logProvider,   $stateProvider,   $urlRouterProvider,   $translateProvider )
     {
       /// debugging
       var isDeveloperEnv = document.location.hostname != 'mobilot.at';
@@ -13,6 +13,18 @@ angular
 
       $logProvider.debugEnabled( isDeveloperEnv );
 
+
+      // Language Settings
+      $translateProvider.useStaticFilesLoader({
+        prefix: 'assets/lang/lang-',
+        suffix: '.json'
+      });
+
+      $translateProvider.determinePreferredLanguage();
+      // TODO: for global usage, this should be en_EN defaultly
+      $translateProvider.fallbackLanguage('de_DE');
+      $translateProvider.useSanitizeValueStrategy('escapeParameters');
+      $translateProvider.useLocalStorage();
 
       /// redirects
 
@@ -22,7 +34,8 @@ angular
         .when('//map', '/')
         .when('//map/', '/')
 
-        .when('/:mobidulCode/list', '/:mobidulCode/list/all')  // TODO: this is somehow ignored
+        // TODO: this is somehow ignored
+        .when('/:mobidulCode/list', '/:mobidulCode/list/all')
         .when('/:mobidulCode/list/', '/:mobidulCode/list/all')
 
         // .when('/:mobidulCode/:stationCode/',          '/:mobidulCode/:stationCode')
@@ -154,13 +167,13 @@ angular
         ////////////////
 
         .state('play', {
-          url : '/play',
-          views : {
-            'header' : {
+          url: '/play/:triggerScan',
+          views: {
+            'header': {
               templateUrl : 'app/modules/core/Header.html',
               controller  : 'HeaderController as header'
             },
-            'content' : {
+            'content': {
               templateUrl : 'app/modules/play/PlayView.html',
               controller  : 'PlayController as play'
             }
@@ -362,6 +375,16 @@ angular
             }
           })
 
+            .state('mobidul.station.verify', {
+              url : '/{verifier}',
+              views : {
+                'mobidulContent': {
+                  templateUrl: 'app/modules/mobidul/station/StationView.html',
+                  controller: 'StationController as station'
+                }
+              }
+            })
+
             ///////////////////////////
             ///// station creator /////
             ///////////////////////////
@@ -455,14 +478,23 @@ angular
             '500': '3797c4'
           });
 
+      var mobilotGreyMap =
+        $mdThemingProvider
+        .extendPalette('grey', {
+          '50': 'ffffff'
+        });
+
       $mdThemingProvider
         .definePalette('mobilotBlue', mobilotBlueMap);
 
+      $mdThemingProvider
+      .definePalette('mobilotGrey', mobilotGreyMap);
 
       $mdThemingProvider
         .theme('default')
         .primaryPalette('mobilotBlue')
-        .accentPalette('amber');
+        .accentPalette('amber')
+        .backgroundPalette('mobilotGrey');
     }
   ])
 

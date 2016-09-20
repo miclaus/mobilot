@@ -39,6 +39,7 @@ if ( isMobile ) {
   // load cordova
 
   // possible protocols to test against => file:, ftp:, http:, https:, mailto:, etc.
+  //noinspection JSAnnotator
   protocolPattern = /^http/i;
   isCordova = ! protocolPattern.test(location.protocol);
   delete protocolPattern;
@@ -54,9 +55,9 @@ if ( isMobile ) {
     cordovaUrl = _online_server;
 
 
-    // @todo - after cordova has finished loading, recheck if windows.cordova is available,
+    // TODO - after cordova has finished loading, recheck if windows.cordova is available,
     //          in order to correctly set isCordova global variable
-    // @note - not necessary yet
+    // NOTE - not necessary yet
 
     //isCordova  = typeof window.cordova !== undefined;
     //cordovaUrl = isCordova ? 'http://mobilot.at' : '';

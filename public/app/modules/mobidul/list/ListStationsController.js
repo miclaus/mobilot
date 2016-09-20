@@ -3,14 +3,14 @@ angular
   .controller('ListStationsController', ListStationsController);
 
 ListStationsController.$inject = [
-  '$log', '$scope', '$rootScope',
+  '$log', '$scope', '$rootScope', '$translate',
   '$state', '$stateParams', 'StateManager',
   'ListService', 'MobidulService', 'FontService',
   'UserService', 'HeaderService', 'RallyService'
 ];
 
 function ListStationsController (
-  $log, $scope, $rootScope,
+  $log, $scope, $rootScope, $translate,
   $state, $stateParams, StateManager,
   ListService, MobidulService, FontService,
   UserService, HeaderService, RallyService
@@ -85,8 +85,8 @@ function ListStationsController (
       //console.info('ListStationsController - _getStations');
       //console.log(response);
 
-      var hasPermission = response.hasPermission,
-          stations = response.stations;
+      var hasPermission = response.hasPermission;
+      var stations = response.stations;
 
       if (hasPermission) {
         MobidulService.getMobidulMode(currentStateParams.mobidulCode)
@@ -96,7 +96,7 @@ function ListStationsController (
             currentStateParams.category !== ListService.ALL_STATIONS
           ) {
             RallyService.filterStations(stations)
-            .then(function (stations){
+            .then(function (stations) {
               list.stations = stations;
             });
           }

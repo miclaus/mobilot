@@ -4,14 +4,14 @@ angular
 
 
 MenuController.$inject = [
-  '$log', '$scope', '$rootScope', '$timeout',
+  '$log', '$scope', '$rootScope', '$timeout', '$translate',
   '$state', '$stateParams', '$mdSidenav', '$mdDialog',
   'MobidulService', 'UserService', 'RallyService', 'FontService', 'StateManager'
 ];
 
 
 function MenuController (
-  $log, $scope, $rootScope, $timeout,
+  $log, $scope, $rootScope, $timeout, $translate,
   $state, $stateParams, $mdSidenav, $mdDialog,
   MobidulService, UserService, RallyService, FontService, StateManager
 ) {
@@ -30,9 +30,10 @@ function MenuController (
 
   menu.profile = {};
 
-  menu.isGoToHomeEnabled    = MobidulService.Config.isGoToHomeEnabled;
-  menu.isGoToAboutEnabled   = MobidulService.Config.isGoToAboutEnabled;
-  menu.isLastDividerEnabled = true;
+  menu.isGoToHomeEnabled     = MobidulService.Config.isGoToHomeEnabled;
+  menu.isGoToAboutEnabled    = MobidulService.Config.isGoToAboutEnabled;
+  menu.isCloneMobidulEnabled = MobidulService.Config.isCloneMobidulEnabled;
+  menu.isLastDividerEnabled  = true;
 
   menu.isLoggedIn      = false;
   menu.accountItemText = menu._loginAccountText;
@@ -79,9 +80,9 @@ function MenuController (
       menu.isLastDividerEnabled = false;
 
     MobidulService.getMobidulMode(StateManager.state.params.mobidulCode)
-      .then(function(mode){
-        menu.isRallyMode = (mode == MobidulService.MOBIDUL_MODE_RALLY);
-      });
+    .then(function(mode){
+      menu.isRallyMode = (mode == MobidulService.MOBIDUL_MODE_RALLY);
+    });
 
     //$log.info('MenuController - _initDefaultValues - menu.isRallyMode');
     //$log.debug(menu.isRallyMode);
@@ -173,32 +174,28 @@ function MenuController (
   function resetRally ()
   {
     var resetRallyConfirmDialog =
-      $mdDialog
-        .confirm()
-        .parent( angular.element(document.body) )
-        .title('Rally zurücksetzten')
-        .textContent('Bitte bestätige, dass du deinen Rally Fortschritt zurücksetzen möchtest.')
-        .ariaLabel('Rally zurücksetzten')
-        .ok('Zurücksetzten')
-        .cancel('Abbrechen');
+      $mdDialog.confirm()
+      .parent( angular.element(document.body) )
+      .title($translate.instant('RESET_RALLY'))
+      .textContent($translate.instant('RESET_RALLY_CONFIRMATION'))
+      .ariaLabel($translate.instant('RESET_RALLY'))
+      .ok($translate.instant('RESET'))
+      .cancel($translate.instant('CANCEL'));
 
-    $mdDialog
-      .show( resetRallyConfirmDialog )
+    $mdDialog.show( resetRallyConfirmDialog )
       .then(function ()
       {
         RallyService.reset();
 
         var resetRallyCompletedDialog =
-          $mdDialog
-            .alert()
+          $mdDialog.alert()
             .parent(angular.element(document.body))
-            .title('Rally zurückgesetzt')
-            .textContent('Dein Rally Fortschitt wurde zurückgesetzt.')
-            .ariaLabel('Rally zurückgesetzt')
-            .ok('Weiter');
+            .title($translate.instant('RALLY_RESET'))
+            .textContent($translate.instant('RALLY_RESET_SUCCESS'))
+            .ariaLabel($translate.instant('RALLY_RESET'))
+            .ok($translate.instant('OK'));
 
-        $mdDialog
-          .show( resetRallyCompletedDialog )
+        $mdDialog.show( resetRallyCompletedDialog )
           .then(function ()
           {
             $state.go($state.current, $stateParams, { reload: true });

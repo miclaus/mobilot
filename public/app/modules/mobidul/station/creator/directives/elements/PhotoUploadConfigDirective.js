@@ -6,24 +6,27 @@ angular
   .directive('photoUploadConfig', PhotoUploadConfig);
 
 PhotoUploadConfig.$inject = [
-  '$log',
-  'UtilityService', 'RallyService', 'PhotoService'
+  '$log', '$stateParams', '$translate',
+  'UtilityService', 'RallyService', 'PhotoService',
+  'AttachmentService'
 ];
 
 function PhotoUploadConfig(
-  $log,
-  util, RallyService, PhotoService
+  $log, $stateParams, $translate,
+  util, RallyService, PhotoService,
+  AttachmentService
 ) {
   return {
 
     restrict: 'E',
-    template: '<div>' +
+    template:
+    '<div>' +
       '{{content}}' +
-      '<md-button class="md-raised md-primary">Foto hochladen</md-button><br>' +
+      '<md-button class="md-raised md-primary" translate="UPLOAD_PHOTO">{{ \'UPLOAD_PHOTO\' | translate }}</md-button><br/>' +
       '<div class="config-part">' +
-        '<md-input-container><input type="text" ng-model="content" placeholder="Erklärungstext"></md-input-container>' +
-        '<action-selector data-opts="ctrl.actionOpts" data-selection="success" data-name="Erflogsaktion"></action-selector>' +
-        '<md-button data-ng-click="ctrl.exportPictures()">Fotos runterladen</md-button>' +
+        '<md-input-container><input type="text" ng-model="content" placeholder="{{ \'EXPLAINATION\' | translate }}"></md-input-container>' +
+        '<action-selector data-opts="ctrl.actionOpts" data-selection="success" data-name="SUCCESS_ACTION"></action-selector>' +
+        '<md-button data-ng-click="ctrl.exportPictures()">{{ \'DOWNLOAD_PHOTOS\' | translate }}</md-button>' +
       '</div>' +
     '</div>',
     scope: {
@@ -49,7 +52,10 @@ function PhotoUploadConfig(
     ctrl.actionOpts = RallyService.getActions();
 
     ctrl.exportPictures = function(){
-      PhotoService.exportPicturesFromComponent($scope.id);
+
+      var stationCode = $stateParams.stationCode;
+
+      AttachmentService.exportPicturesFromComponent(stationCode, $scope.id);
     };
   }
 }
