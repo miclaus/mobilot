@@ -92,8 +92,7 @@ function MapController (
   function _init () {
     // $log.debug('MapController init');
     // $log.debug('isNewStation : ' + map.isNewStation);
-    // LocalStorageService.explainGenericGeoPermit(true);
-
+    LocalStorageService.init();
 
     _initDefaultValues();
 
@@ -183,10 +182,7 @@ function MapController (
     // $log.debug('watchPosition in MapController : ');
     // $log.debug($scope.myPosition);
 
-    if (
-      ! $scope.myPosition &&
-      LocalStorageService.shouldExplainGenericGeoPermit()
-    ) {
+    if ( ! $scope.myPosition && LocalStorageService.shouldExplainGeoPermit() ) {
       var informAboutGeoPermitDialog =
         $mdDialog.alert()
           .parent(angular.element(document.body))
@@ -196,12 +192,11 @@ function MapController (
           .ok($translate.instant('OK'));
 
       $mdDialog.show( informAboutGeoPermitDialog )
-      .then(function () {
-        LocalStorageService.explainGenericGeoPermit(false);
+        .then(function () {
+          LocalStorageService.explainGeoPermit(false);
 
-        _watchPosition();
-      });
-
+          _watchPosition();
+        });
     } else {
       _watchPosition();
     }
@@ -209,7 +204,7 @@ function MapController (
 
 
   function _watchPosition () {
-    // NOTE this is the javascript animation for the tracking control
+    // NOTE: this is the javascript animation for the tracking control
     _startSignalGatheringPosition();
 
     var watchPositionId =
@@ -268,24 +263,23 @@ function MapController (
         $log.error('watchPosition error in MapController :');
         $log.error(error);
 
-        // TODO - implement possibility for retries here as well !!!
+        // TODO: implement possibility for retries here as well !!!
         var retryPossible = false; // default : true
         var errorMessage  = $translate.instant('UNKNOWN_ERROR_MSG');
 
-        switch ( error.code )
-        {
-          case MapService.PERMISSION_DENIED :
-            errorMessage  = $translate.instant('PERMISSION_DENIED_MSG');
+        switch ( error.code ) {
+          case MapService.PERMISSION_DENIED:
+            errorMessage = $translate.instant('PERMISSION_DENIED_MSG');
             retryPossible = false;
-          break;
+            break;
 
-          case MapService.POSITION_UNAVAILABLE :
+          case MapService.POSITION_UNAVAILABLE:
             errorMessage = $translate.instant('POSITION_UNAVAILABLE_MSG');
-          break;
+            break;
 
-          case MapService.TIMEOUT :
+          case MapService.TIMEOUT:
             errorMessage = $translate.instant('TIMEOUT_MSG');
-          break;
+            break;
 
           default : break;
         }
@@ -302,11 +296,9 @@ function MapController (
               .cancel($translate.instant('BACK_TO_MOBIDULS'));
 
           $mdDialog.show( positionErrorDialog )
-            .then(function ()
-            {
+            .then(function () {
               home.getMyPosition()
-                .then(function (position)
-                {
+                .then(function (position) {
                   _switchSearchType();
                 });
 
@@ -323,9 +315,8 @@ function MapController (
               .ok($translate.instant('TO_MAP'));
 
           // TODO: Implement functionality if error happens.
-          // $mdDialog.show( positionErrorDialog2 )
-          //   .then(function ()
-          //   {
+          // $mdDialog.show(positionErrorDialog2)
+          //   .then(function () {
           //     // ...
           //   });
         }
@@ -333,11 +324,10 @@ function MapController (
         _stopSignalGatheringPosition();
         _hideMyPositionMarker();
         _hideAccuracyRibbon();
-      },
-      {
-          timeout           : 5000,  // ms
-          maximumAge        : 10000, // ms
-          enableHighAccuracy : true
+      }, {
+        timeout           : 5000,  // ms
+        maximumAge        : 10000, // ms
+        enableHighAccuracy : true
       });
 
     MapService.watchPositionId = watchPositionId;
@@ -349,7 +339,7 @@ function MapController (
       $scope.locationBlink = ! $scope.locationBlink;
     }, 600);
 
-    MapService.setGatheringPositionIntervalPromise( promise );
+    MapService.setGatheringPositionIntervalPromise(promise);
   }
 
 
@@ -366,9 +356,8 @@ function MapController (
 
       if ( $scope.myPositionOpacity >= 1 ) {
         $scope.myPositionOpacity = 1;
-        $interval.cancel( myPositionAnimationInterval );
+        $interval.cancel(myPositionAnimationInterval);
       }
-
     }, 40);
   }
 
@@ -387,7 +376,7 @@ function MapController (
   function _showAccuracyRibbon () {
     $scope.$apply(function () {
       $scope.accuracyRibbon.value =
-        Math.round( $scope.myPosition.coords.accuracy );
+        Math.round($scope.myPosition.coords.accuracy);
 
       $scope.accuracyRibbon.show  = true;
     });
@@ -487,29 +476,29 @@ function MapController (
   /// public functions
 
   function stationSelect (event, marker) {
-    // $log.debug('Station select on MapController :');
+    // $log.debug('Station select on MapController:');
     // $log.debug(event);
     // $log.debug(marker);
 
     // show info window for this marker
-    var center = new google.maps.LatLng( marker.latitude, marker.longitude );
-    var html =
+    var center = new google.maps.LatLng(marker.latitude, marker.longitude);
+    var html = (
       '<div id="infoWindowBody">' +
         '<button class="md-button"' +
-          '  ng-click="goToStation(\'' + marker.id + '\')">' +
+          ' ng-click="goToStation(\'' + marker.id + '\')">' +
           '<span>' + marker.name + '</span>' +
         '</button>' +
-      '</div>';
+      '</div>'
+    );
 
-    $scope.infoWindow.setContent( html );
-    $scope.infoWindow.setPosition( center );
-    $scope.infoWindow.open( $scope.map );
+    $scope.infoWindow.setContent(html);
+    $scope.infoWindow.setPosition(center);
+    $scope.infoWindow.open($scope.map);
 
-    // NOTE really interesting thing happening here
-    $scope.$apply(function () {
+    // NOTE: really interesting thing happening here
+    $scope.$apply(function() {
       var infoWindowBody = document.getElementById('infoWindowBody');
-
-      $compile( infoWindowBody )( $scope );
+      $compile(infoWindowBody)($scope);
     });
   }
 

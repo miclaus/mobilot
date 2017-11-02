@@ -1,0 +1,122 @@
+iOS App Store
+
+Name: Mobilot
+Privacy Policy URL: http://seekoi.fhstp.ac.at/mobilot/#datenschutz
+
+Category
+Primary: Education
+Secondary: -
+
+
+Version Information
+App Preview and Screenshots (zur App Preview: https://developer.apple.com/app-store/app-previews/)
+iPhone: 5.5-Inch Display, 4.7, 4, 3.5
+iPad: 12.9-Inch Display, 9.7
+
+Description:
+--> A description of your app, detailing features and functionality. It will also be used for your Apple Watch app. max. 4000 characters
+
+Mobilot (der mobile Pilot) ist ein System zum einfachen Erstellen von kontext-orientierten Informationen. Eine kontext-orientierte Information wird angezeigt, wenn sich die User in einer bestimmten Situation befinden z.B. an einem bestimmten Ort.
+Mit Mobilot können von jedem Naturlehrpfade, Städte- und Restaurantführer aber auch komplexere Rätselrallyes ohne jegliche Programmierkenntnisse erstellt werden.
+
+Funktionen:
+* Mobidule (mit Mobilot erstellte eigenständige Anwendungen) vom Typ "default" und "rally" administrieren und konsumieren
+* Stationen innerhalb von Mobidulen erstellen, die an eine Geo-Position (GPS) gebunden sind
+* Station mit Hilfe von Kategorien gliedern
+* Editierrechte für ein Mobidul über Mitmach-Codes vergeben
+* Regeln für Stationen erstellen
+ ** Station frei schalten, wenn Geo-Position erreicht
+ ** Station frei schalten, wenn man in der Nähe eines Bluetooth-Tags ist
+ ** Station frei schalten, wenn Code richtig eingegeben oder eine Frage richtig beantwortet wurde
+ ** Station innerhalb einer vorgegebenen Zeit absolvieren
+ ** Punktesystem
+
+Gestartet werden kann mit den TeilnehmerInnen innerhalb von wenigen Minuten, ohne jeglicher technischen Vorbereitung, einfach jeder mit seinem eigenen Smartphone, eine funktionierende Internetverbindung vorausgesetzt.
+
+Mobilot wurde im Projekt seekoi von Januar bis Dezember 2016 weiterentwickelt und wird über den 10. Call von Netidee durch die Internet Foundation Austria (IPA) gefördert.
+
+Keywords:
+--> One or more keywords that describe your app. Keywords make App Store search results more accurate. Separate keywords with a comma. max. 100 characters
+Kontext, GPS, Rally, Naturlehrpfad, Verorten
+
+
+Support URL:
+--> A URL with support information for your app. This URL will be visible on the App Store.
+http://www.mobilot.at
+
+Marketing URL: (wenn wir die nicht angeben müssen, dann weglassen)
+--> A URL with marketing information about your app. This URL will be visible on the App Store.
+http://www.mobilot.at
+
+General App Information
+App Icon
+--> This icon will be used on the App Store and must be in the JPG or PNG format, with a minimum resolution of at least 72 DPI, and in the RGB color space. It must not contain layers or rounded corners.
+
+Copyright
+--> The name of the person or entity that owns the exclusive rights to your app, preceded by the year the rights were obtained (for example, "2008 Acme Inc."). Do not provide a URL.
+2016 Fachhochschule St. Pölten
+
+App Review Information
+Contact Information --> Iosif bei iOS und Florian bei Android?
+First Name:
+Last Name:
+Phone Number:
+Email:
+
+Demo Account --> bitte Demo-Account anlegen
+? A demo account is required to use all the features of the app.
+Username: 
+Password:
+
+Notes
+--> Additional information about your app that can help during the review process. Include information that may be needed to test your app, such as app-specific settings. max. 4000
+
+Version Release
+? Manually release this version
+X Automatically release this version
+? Automatically release this version after App Review, no earlier than
+
+
+
+Google PlayStore
+Titel (max. 30):
+Mobilot
+
+Kurze Beschreibung (max. 80):
+Mobilot ist ein System zum Erstellen von kontext-orientierten Informationen.
+
+Lange Beschreibung (max. 4000):
+Mobilot (der mobile Pilot) ist ein System zum einfachen Erstellen von kontext-orientierten Informationen. Eine kontext-orientierte Information wird angezeigt, wenn sich die User in einer bestimmten Situation befinden z.B. an einem bestimmten Ort.
+Mit Mobilot können von jedem Naturlehrpfade, Städte- und Restaurantführer aber auch komplexere Rätselrallyes ohne jegliche Programmierkenntnisse erstellt werden.
+
+Funktionen:
+* Mobidule (mit Mobilot erstellte eigenständige Anwendungen) vom Typ "default" und "rally" administrieren und konsumieren
+* Stationen innerhalb von Mobidulen erstellen, die an eine Geo-Position (GPS) gebunden sind
+* Station mit Hilfe von Kategorien gliedern
+* Editierrechte für ein Mobidul über Mitmach-Codes vergeben
+* Regeln für Stationen erstellen
+ ** Station frei schalten, wenn Geo-Position erreicht
+ ** Station frei schalten, wenn man in der Nähe eines Bluetooth-Tags ist
+ ** Station frei schalten, wenn Code richtig eingegeben oder eine Frage richtig beantwortet wurde
+ ** Station innerhalb einer vorgegebenen Zeit absolvieren
+ ** Punktesystem
+
+Gestartet werden kann mit den TeilnehmerInnen innerhalb von wenigen Minuten, ohne jeglicher technischen Vorbereitung, einfach jeder mit seinem eigenen Smartphone, eine funktionierende Internetverbindung vorausgesetzt.
+
+Mobilot wurde im Projekt seekoi von Januar bis Dezember 2016 weiterentwickelt und wird über den 10. Call von Netidee durch die Internet Foundation Austria (IPA) gefördert.
+
+KATEGORISIERUNG
+App-Typ: Apps
+Kategorie: Education
+Einstufung des Inhalts: Stufe 3 - Niedrig
+Neue Einstufung des Inhalts: Fragebogen durchklicken
+
+KONTAKTINFORMATIONEN
+Website: http://www.mobilot.at
+E-Mail-Adresse*: mfg@fhstp.ac.at
+Telefon:
+
+DATENSCHUTZERKLÄRUNG
+Unten kannst du eine URL zu einer Datenschutzerklärung für diese App bereitstellen. Schau dir außerdem unsere Richtlinien zu Nutzerdaten an, um typische Verstöße zu vermeiden.
+Datenschutzerklärung: http://seekoi.fhstp.ac.at/mobilot/#datenschutz
+

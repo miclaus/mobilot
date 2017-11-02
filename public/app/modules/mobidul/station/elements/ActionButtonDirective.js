@@ -23,11 +23,11 @@ function ActionButton (
     template: '' +
       '<div>' +
         '<md-button ' +
-          'class="md-raised md-primary" ' +
+          'class="md-raised md-primary md-mobilot" ' +
           'ng-click="actionButton.clicked()"' +
         '>' +
           '<ng-transclude></ng-transclude>' +
-        '</md-button>' +
+        '</md-button><br /><md-divider id="station_creator_divider"></md-divider>' +
       '</div>'
     ,
     controller: ActionButtonController,

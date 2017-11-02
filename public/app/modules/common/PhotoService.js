@@ -128,9 +128,9 @@ function PhotoService(
             }
           }
 
-          //you have to create a new canvas element for each upload.
-          //reusing an existing one isn't working on iphones due to safari resource limits.
-          var canvas = document.createElement('canvas');// that.$.myCanvas;
+          // you have to create a new canvas element for each upload.
+          // reusing an existing one isn't working on iphones due to safari resource limits.
+          var canvas = document.createElement('canvas'); // that.$.myCanvas;
 
           //if portrait picture: switch imagewidth and imageheight
           if (exifOr == 8 || exifOr == 6) {
@@ -148,7 +148,7 @@ function PhotoService(
           _drawImageIOSFix(ctx, image, 0, 0, image.width, image.height, 0, 0, Math.round(imageWidth), Math.round(imageHeight), exifOr);
 
           // The resized file ready for upload
-          var finalFile = canvas.toDataURL("image/jpeg", 0.7);
+          var finalFile = canvas.toDataURL('image/jpeg', 0.7);
           var newFileName = file.name.split('.');
 
           //TODO change it so that it works with angular
@@ -157,27 +157,29 @@ function PhotoService(
           newFileName.join('.');
 
           if (finalFile.length > 6) {
-
-            //Check if file is already in MediaList
+            // Check if file is already in MediaList
             var hash = CryptoJS.MD5(finalFile).toString(CryptoJS.enc.Base64);
 
             var File = {
               'name': 'file',
               'file': finalFile,
-              'filename': newFileName + ".jpg",
+              'filename': newFileName + '.jpg',
               'hash': hash,
               'extension': '.jpg',
               'componentId': componentId,
               'stationCode': $stateParams.stationCode
             };
 
-              $http.post('/' + $stateParams.mobidulCode + '/saveImage', JSON.stringify(File)).then(function (response) {
-                resolve(response.data);
-              }, function (error) {
-                reject(error);
-              });
+            $http.post(cordovaUrl + '/' + $stateParams.mobidulCode + '/saveImage',
+              JSON.stringify(File)
+            ).then(function (response) {
+              resolve(response.data);
+            }, function (error) {
+              reject(error);
+            });
 
           } else {
+            // ...
           }
         };
       };

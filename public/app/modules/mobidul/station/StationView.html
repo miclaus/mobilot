@@ -21,18 +21,18 @@
       <div
         layout="column"
         style="margin-bottom: 1em; border-radius: 4px; padding: 1em"
-        ng-if="station.isOwner"
+        ng-if="station.isOwner && station.isRalley"
       >
         <md-tabs>
           <md-tab
             ng-repeat="state in station.mobidulConfig.states"
-            ng-click="station.setRallyState( state )"
+            md-on-select="station.setRallyState( state )"
             md-active="state == station.currentState"
           >{{ 'STATE' | translate }} : {{ state | translate }}</md-tab>
         </md-tabs>
       </div>
 
-      <div id="station-container"></div>
+      <div id="station_container"></div>
     </div>
   </md-content>
 

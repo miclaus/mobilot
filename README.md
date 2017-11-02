@@ -1,5 +1,7 @@
 # Mobilot
 
+https://www.mobilot.at
+
 Mobilot presents an intuitive system for easily creating and consuming content-centric content: _seekoi_. It can be used for various applications and is intended to enable this for all Internet users.
 
 ### About
@@ -34,13 +36,11 @@ For contributing to the project, please check the ```CONTRIBUTING.md``` file or 
 Project _seekoi_ runs from January to December 2016 and is funded through the [10th Call of Netidee](https://www.netidee.at/die-netidee-2015/) by the [Internet Foundation Austria (IPA)](https://www.netidee.at/die-internet-foundation-austria-ipa/).
 
 ### [Netidee](https://www.netidee.at)
-![Netidee Logo][netideelogo]
-[netideelogo]: http://seekoi.fhstp.ac.at/img/netidee-logo_RGB.png "Netidee"
+<img src="https://github.com/fhstp-mfg/mobilot/blob/develop/public/assets/img/netidee-250.png" alt="Netidee" width="250">
 
 ### [St. Pölten University of Applied Sciences](https://www.fhstp.ac.at)
-![St. Pölten University of Applied Sciences Logo][fhstplogo]
-[fhstplogo]: http://seekoi.fhstp.ac.at/img/fh-logo.jpg "St. Pölten University of Applied Sciences Logo"
+<img src="http://seekoi.fhstp.ac.at/img/fh-logo.jpg" alt="St. Pölten University of Applied Sciences Logo" width="150">
 
-## License
+## Licence
 
-[MIT license](http://opensource.org/licenses/MIT)
+[The BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause) (BSD-3-Clause)

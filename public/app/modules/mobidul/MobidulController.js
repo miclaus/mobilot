@@ -44,8 +44,7 @@ function MobidulController (
   {
     $log.debug('init MobidulController');
     // $log.debug(StateManager.state);
-    LocalStorageService.explainGenericGeoPermit(true);
-
+    // LocalStorageService.explainGenericGeoPermit(true);
 
     _initDefaultValues();
 
@@ -73,7 +72,7 @@ function MobidulController (
     var menuReadyListener =
       $rootScope.$on('Menu::ready', function (event) {
         // $log.debug('Heard "Menu::ready" in MobidulController');
-        // $log.debug(data);
+        // $log.debug(event);
 
         _requestConfig();
       });
@@ -91,7 +90,6 @@ function MobidulController (
 
     MobidulService.getConfig(mobidulCode)
     .then(function (mobidulConfig) {
-
       // TODO: save the whole configuration without overriding
       // MobidulService.Config.title = config.mobidulName;
       // HeaderService.title = config.mobidulName;
@@ -104,10 +102,9 @@ function MobidulController (
       // TODO: adapt services to return necessary data
       var menuData = mobidulConfig.customNav.navigation;
 
-      // Reset menu before receiving it
-      mobidul.menu = [];
+      var menuItems = [];
 
-      angular.forEach( menuData, function (item, key) {
+      angular.forEach( menuData, function (item) {
         var menuItem = {};
         menuItem.code = item.id;
         menuItem.func = item.func;
@@ -116,13 +113,29 @@ function MobidulController (
         menuItem.isDivider = item.isDivider;
 
         if (item.href) {
-          menuItem.href = ( item.href != 'map.html' ) ? item.href : 'map';
+          menuItem.href = item.href != 'map.html' ? item.href : 'map';
         }
 
-        mobidul.menu.push(menuItem);
+        menuItems.push(menuItem)
       });
 
 
+      // NOTE: Divide all menuItems into dividerBlocks
+      // Reset menu before receiving it
+      mobidul.menu = [];
+      var currentBlock = [];
+
+      angular.forEach(menuItems, function (item, key) {
+        currentBlock.push(item);
+
+        var nextItem = menuItems[key+1];
+        if ( typeof nextItem === 'undefined'
+          || nextItem.isDivider !== item.isDivider
+        ) {
+          mobidul.menu.push(currentBlock);
+          currentBlock = [];
+        }
+      });
 
 
       if ( StateManager.isMobidul() )
@@ -159,8 +172,6 @@ function MobidulController (
 
         var is_developer_mode = true;
 
-
-
         // NOTE: simply don't redirect when is developer mode
         if ( ! is_developer_mode ) {
           mobidul.switchContent(switchContentParams);
@@ -168,7 +179,7 @@ function MobidulController (
       }
     })
     .then(function () {
-      $rootScope.$emit('rootScope:toggleAppLoader', { action : 'hide' });
+      $rootScope.$emit('rootScope:toggleAppLoader', { action: 'hide' });
     });
   }
 

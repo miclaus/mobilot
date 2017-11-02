@@ -6,7 +6,7 @@ angular
 StationCreatorController.$inject = [
   '$log', '$rootScope', '$scope', '$q', '$translate',
   '$state', '$stateParams', 'StateManager',
-  '$mdDialog',
+  '$mdDialog', '$cordovaBeacon',
   'UtilityService', 'HeaderService', 'MobidulService',
   'StationCreatorService', 'MapService', 'StationService'
 ];
@@ -15,7 +15,7 @@ StationCreatorController.$inject = [
 function StationCreatorController (
   $log, $rootScope, $scope, $q, $translate,
   $state, $stateParams, StateManager,
-  $mdDialog,
+  $mdDialog, $cordovaBeacon,
   UtilityService, HeaderService, MobidulService,
   StationCreatorService, MapService, StationService
 )
@@ -42,7 +42,7 @@ function StationCreatorController (
   stationCreator.origCategories = [];
 
   stationCreator.stationOptions = [{
-    name        : $translate.instant('IMMUTABLE'),
+    name        : $translate.instant('IMMUTABLE_STATION'),
     description : $translate.instant('IMMUTABLE_STATION_DESCRIPTION'),
     selected    : false
   }, {
@@ -56,6 +56,7 @@ function StationCreatorController (
   stationCreator.circleColor        = MapService.circleColor;
   stationCreator.centerToMyPosition = false;
   stationCreator.isRally            = false;
+  stationCreator.showStationStates  = false;
 
   // basic
   stationCreator.basis = {
@@ -74,7 +75,7 @@ function StationCreatorController (
 
   // edit modes
   stationCreator.isNameEditMode = false;
-
+  stationCreator.editStationCode = false;
 
 
   /// functions
@@ -85,8 +86,9 @@ function StationCreatorController (
   // basis
   stationCreator.changeName = changeName;
   stationCreator.changeCode = changeCode;
+  stationCreator.invokeChangeCode = invokeChangeCode;
   // map
-  // NOTE - moved to MapController
+  // NOTE: moved to MapController
   // stationCreator.dropMarker = dropMarker;
   // categories
   // ...
@@ -114,13 +116,6 @@ function StationCreatorController (
 
     _listenToCancelEdit();
     _listenToSaveStation();
-
-    // if ( stationCreator.state === 'mobidul.station.edit.place' )
-    // {
-    //   _waitForGoogleMapApi();
-    //
-    //   _waitForGoogleMap();
-    // }
   }
 
 
@@ -128,9 +123,13 @@ function StationCreatorController (
   {
     var currentStateParams = StateManager.state.params;
 
-    // TODO - check if this statament is really necessary
-    if ( currentStateParams )
-    {
+    // NOTE: This is only temporary for the TODO below! Should be removed asap!
+    if (currentStateParams) { /*_*/ } else {
+      alert('currentStateParams in StationCreatorController:_initDefaultValues undefined');
+    }
+
+    // TODO: check if this statament is really necessary
+    if (currentStateParams) {
       var mobidulCode = currentStateParams.mobidulCode;
       var stationCode = currentStateParams.stationCode;
 
@@ -138,8 +137,7 @@ function StationCreatorController (
 
       // var stationOptions = angular.copy( stationCreator.stationOptions );
 
-      stationCreator.station =
-      {
+      stationCreator.station = {
         name : '',
         link : '',
         code : '',
@@ -152,10 +150,13 @@ function StationCreatorController (
       _resetStationOptions();
 
 
-      //Check if mobidule is rallye
+      // Check if mobidule is rallye
       MobidulService.getMobidulMode(currentStateParams.mobidulCode)
-        .then(function(mode){
-          stationCreator.isRally = (mode == MobidulService.MOBIDUL_MODE_RALLY);
+        .then(function (mobidulMode) {
+          var isRallyMode = mobidulMode == MobidulService.MOBIDUL_MODE_RALLY;
+
+          stationCreator.isRally = isRallyMode;
+          stationCreator.showStationStates = isRallyMode;
         });
 
       // setting corrent url for current mobidul
@@ -163,11 +164,10 @@ function StationCreatorController (
 
 
       // loading mobidul categories
-      _loadCategories( mobidulCode )
-        .then(function ()
-        {
-          // NOTE - after the mobidul categories are loaded,
-          //    station related data should be loaded .
+      _loadCategories(mobidulCode)
+        .then(function () {
+          // NOTE: after the mobidul categories are loaded,
+          // station related data should be loaded.
 
           var isNewStation = stationCode === StateManager.NEW_STATION_CODE;
 
@@ -175,43 +175,35 @@ function StationCreatorController (
 
 
           // different actions when there is new station or nah .
-          if ( isNewStation )
-          {
+          if (isNewStation) {
             stationCreator.basis.generateCode = true;
 
             //new station - fill with default station structure
             MobidulService.getMobidulConfig(StateManager.state.params.mobidulCode)
-              .then(function(response){
+              .then(function (response) {
 
                 var config = {};
-                angular.forEach(response.states, function(state){
-                  config[state] = [
-                    {
-                      type: 'HTML',
-                      content: $translate.instant('STATION_SAMPLE_TEXT')
-                    }
-                  ];
+                angular.forEach(response.states, function (state) {
+                  config[state] = [{
+                    type: 'HTML',
+                    content: $translate.instant('STATION_SAMPLE_TEXT')
+                  }];
                 });
 
                 stationCreator.station.content = config;
-
               });
+          } else {
+            _loadStation(mobidulCode, stationCode);
           }
-          else
-          {
-            _loadStation( mobidulCode, stationCode );
-          }
-          _loadAllStations(mobidulCode);
 
+          _loadAllStations(mobidulCode);
         });
 
 
       // getting current position
-      MapService
-        .getCurrentPosition()
-        .then(function (position)
-        {
-          // NOTE - check if this is even necessary
+      MapService.getCurrentPosition()
+        .then(function (position) {
+          // NOTE: check if this is even necessary
           stationCreator.myPosition = position;
         });
     }
@@ -220,8 +212,7 @@ function StationCreatorController (
 
   function _listenToStationCode ()
   {
-    $scope.$watch('stationCreator.station.code', function (newCode, oldCode)
-    {
+    $scope.$watch('stationCreator.station.code', function (newCode, oldCode) {
       stationCreator.codePreview =
         newCode ? newCode : StationCreatorService.STATION_CODE_EXAMPLE;
     });
@@ -233,8 +224,7 @@ function StationCreatorController (
     // $log.debug('(( Listening to "Header::cancelEdit"');
 
     var cancelEditListener =
-      $rootScope.$on('Header::cancelEdit', function (event, config)
-      {
+      $rootScope.$on('Header::cancelEdit', function (event, config) {
         // $log.debug('Listened to "Header::cancelEdit"');
 
         // _saveStation();
@@ -272,28 +262,27 @@ function StationCreatorController (
    */
   function _loadAllStations(mobidulCode)
   {
-
-    StationService
-      .getMapStations(mobidulCode)
-      .success(function(stations){
+    StationService.getMapStations(mobidulCode)
+      .success(function (stations) {
 
         //$log.info("loadAllStations:");
         //$log.debug(stations);
 
         //Check if marker exists (doesn't if new station is created)
-        if(StationCreatorService.marker.coords) {
+        if (StationCreatorService.marker.coords) {
           //Remove stations with the same coordinates as the current station
           stations = stations.filter(function (station) {
-            return station.lat != StationCreatorService.marker.coords.latitude && station.lon != StationCreatorService.marker.coords.longitude;
+            return (
+              station.lat != StationCreatorService.marker.coords.latitude &&
+              station.lon != StationCreatorService.marker.coords.longitude
+            );
           });
-        }else{
-          //$log.info("New Marker");
+        } else {
+          // $log.info("New Marker");
         }
 
-        angular.forEach(stations, function(station, key){
-
-          var stationData =
-          {
+        angular.forEach(stations, function (station, key) {
+          var stationData = {
             id         : station.code,
             latitude   : station.lat,
             longitude  : station.lon,
@@ -304,14 +293,9 @@ function StationCreatorController (
 
         });
       })
-      .error(function (response, status, headers, config, statusText)
-      {
+      .error(function (response, status, headers, config, statusText) {
         $log.error(response);
         $log.error(status);
-      })
-      .then(function(){
-        //$log.info("StationCreatorController - _loadAllStations - stationCreator.stations:");
-        //$log.debug(StationCreatorService.markersAll);
       });
   }
 
@@ -393,31 +377,32 @@ function StationCreatorController (
           stationCreator.stationOptions[ 1 ].selected   = isEnabled;
 
 
-          stationCreator.station =
-          {
-            name     : stationData.name,
-            link    : mobidulUrl,
-            code     : stationData.code,
-            lat     : stationData.lat,
-            lon     : stationData.lon,
-            radius     : stationData.radius,
+          stationCreator.station = {
+            name        : stationData.name,
+            link        : mobidulUrl,
+            code        : stationData.code,
+            lat         : stationData.lat,
+            lon         : stationData.lon,
+            radius      : stationData.radius,
             contentType : stationData.contentType,
-            locked     : isLocked,
-            enabled   : isEnabled
+            locked      : isLocked,
+            enabled     : isEnabled
 
             // categories   : stationCreator.station.categories,
             // medialist    : []
           };
 
-          try{
+          try {
             stationCreator.station.content =  JSON.parse(stationData.content);
-          }catch(e){
+            // console.debug('BLUE::StationCreatorController _loadStation::stationData.content');
+            // console.debug(stationCreator.station.content );
+          } catch(e) {
             $log.error('Error while parsing station.content');
           }
 
           // make reference-less copyies of the loaded station data
           //  for checking changes later on
-          stationCreator.origStation = angular.copy( stationCreator.station );
+          stationCreator.origStation = angular.copy(stationCreator.station);
 
 
           stationCreator.basis.originalCode = stationData.code;
@@ -432,8 +417,7 @@ function StationCreatorController (
           };
         }
       })
-      .error(function (response, status, headers, config)
-      {
+      .error(function (response, status, headers, config) {
         $log.error(response);
         $log.error(status);
       });
@@ -497,6 +481,8 @@ function StationCreatorController (
           medialist: []
         };
 
+        // console.debug('BLUE::StationCreatorController _saveStation::stationCreator.station.content');
+        // console.debug(stationCreator.station.content);
 
         // $log.debug('station data : ');
         // $log.debug(stationData);
@@ -583,9 +569,11 @@ function StationCreatorController (
     var hasCategoriesChanges = ! angular.equals( stationCreator.categories, stationCreator.origCategories );
     var hasOptionChanges     = ! angular.equals( stationCreator.stationOptions, stationCreator.origStationOptions );
 
-    var hasChanges = hasStationChanges     ||
-             hasCategoriesChanges ||
-             hasOptionChanges;
+    var hasChanges = (
+      hasStationChanges ||
+      hasCategoriesChanges ||
+      hasOptionChanges
+    );
 
     // $log.debug('hasChanged : ' + hasChanges);
     // $log.debug('origStation vs station :');
@@ -628,17 +616,17 @@ function StationCreatorController (
             '</md-dialog-content>' +
 
             '<md-dialog-actions class="md-dialog-content-divider">' +
-              '<md-button ng-click="stationCreator.discardChanges()" translate="DISCARD">' +
+              '<md-button class="md-primary" ng-click="stationCreator.discardChanges()" translate="DISCARD">' +
                 '' +
               '</md-button>' +
 
               '<span flex></span>' +
 
-              '<md-button ng-click="stationCreator.closeDialog()" translate="CANCEL">' +
+              '<md-button class="md-primary" ng-click="stationCreator.closeDialog()" translate="CANCEL">' +
                 '' +
               '</md-button>' +
 
-              '<md-button ng-click="stationCreator.saveChanges()">' +
+              '<md-button class="md-primary md-mobilot" style="color: #ffffff" ng-click="stationCreator.saveChanges()">' +
                 saveButtonText +
               '</md-button>' +
             '</md-dialog-actions>' +
@@ -756,116 +744,111 @@ function StationCreatorController (
 
   function changeName ()
   {
-    if ( stationCreator.isNewStation || stationCreator.basis.generateCode )
-    {
-      // TODO – change default station name handling
-      var stationName = stationCreator.station.name.trim() || '(' + $translate.instant('UNKNOWN') + ')';
-      var stationCode = UtilityService.getCodeFromName( stationName );
+    if ( stationCreator.isNewStation || stationCreator.basis.generateCode ) {
+      var stationName = stationCreator.station.name
+        ? stationCreator.station.name.trim()
+        : '(' + $translate.instant('UNKNOWN') + ')';
+      var stationCode = UtilityService.getCodeFromName(stationName);
 
-
-      if ( stationCode )
+      if (stationCode) {
         stationCreator.basis.codeHelper.text = stationCreator._codeHelperGenerating;
+      }
 
 
-      if ( stationCreator.isNewStation ||
-         ( ! stationCreator.isNewStation &&
-           ! _isOriginalCode( stationCode ) ) )
-      {
+      if ( stationCreator.isNewStation
+        || ( ! stationCreator.isNewStation
+          && ! _isOriginalCode(stationCode)
+        )
+      ) {
         StationService
-          .requestValidCode( stationCode )
-          .success(function (code, status, headers, config)
-          {
+          .requestValidCode(stationCode)
+          .success(function (code, status, headers, config) {
             // $log.debug('request valid code callback from changeName : ');
             // $log.debug(code);
 
             stationCode = code;
 
-            if ( stationCode )
-            {
+            if (stationCode) {
               stationCreator.station.code = stationCode;
-
 
               _refreshCodeHelper( stationCode, stationCreator._codeHelperGenerated );
 
-
-              if ( ! stationCreator.isNewStation )
-
+              if ( ! stationCreator.isNewStation ) {
                 stationCreator.basis.generateCode = false;
-            }
-            else
-            {
+              }
+            } else {
               stationCreator.station.code = '';
 
               _resetCodeHelper();
             }
           });
-      }
-      else
+      } else {
         _restoreOriginalStationCode();
+      }
     }
   }
 
 
-  function changeCode ()
-  {
-    // $log.debug('change code');
-    // $log.debug(stationCreator.station.code + "<");
+  function changeCode () {
+    // $log.debug('change code', stationCreator.station.code);
 
     stationCreator.station.code =
-      UtilityService.formatCode( stationCreator.station.code );
+      UtilityService.formatCode(stationCreator.station.code);
 
-    // $log.debug(stationCreator.station.code + "<");
+    // $log.debug('formatted code', stationCreator.station.code);
 
     var stationCode = stationCreator.station.code;
 
-
-    if ( stationCode )
-    {
-      if ( stationCreator.isNewStation ||
-         ( ! stationCreator.isNewStation &&
-           ! _isOriginalCode( stationCode ) ) )
-      {
-        StationService.requestValidCode( stationCode )
-          .success(function (code, status, headers, config)
-          {
+    if (stationCode) {
+      if ( stationCreator.isNewStation
+        || ( ! stationCreator.isNewStation
+          && ! _isOriginalCode(stationCode)
+        )
+      ) {
+        StationService.requestValidCode(stationCode)
+          .success(function (code, status, headers, config) {
             // $log.debug('request valid code callback from changeCode : ');
             // $log.debug(code);
             // $log.debug('stationCode (' + stationCode + ')');
 
             stationCreator.station.code = code;
 
-            if ( stationCode !== code )
-
-              _refreshCodeHelper( code, stationCreator._codeHelperGenerated );
-
-            else
-              _refreshCodeHelper( code, stationCreator._codeHelperManual );
+            if ( stationCode !== code ) {
+              _refreshCodeHelper(code, stationCreator._codeHelperGenerated);
+            } else {
+              _refreshCodeHelper(code, stationCreator._codeHelperManual);
+            }
           });
-      }
-      else
+      } else {
         _restoreOriginalStationCode();
-    }
-    else
-    {
+      }
+    } else {
       stationCreator.basis.generateCode = true;
 
       changeName();
     }
   }
 
-  /// event
-  function deleteStation ()
-  {
+
+
+  /// events
+
+  function invokeChangeCode () {
+    stationCreator.editStationCode = ! stationCreator.editStationCode;
+  }
+
+
+  function deleteStation () {
     var confirmDeleteStationDialog =
       $mdDialog.confirm()
-      .parent( angular.element(document.body) )
-      .title($translate.instant('STATION_DELETE_CONFIRMATION_TITLE'))
-      .textContent($translate.instant('STATION_DELETE_CONFIRMATION'))
-      .ariaLabel($translate.instant('STATION_DELETE_CONFIRMATION_TITLE'))
-      .ok($translate.instant('DELETE'))
-      .cancel($translate.instant('CANCEL'));
+        .parent(angular.element(document.body))
+        .title($translate.instant('STATION_DELETE_CONFIRMATION_TITLE'))
+        .textContent($translate.instant('STATION_DELETE_CONFIRMATION'))
+        .ariaLabel($translate.instant('STATION_DELETE_CONFIRMATION_TITLE'))
+        .ok($translate.instant('DELETE'))
+        .cancel($translate.instant('CANCEL'));
 
-    $mdDialog.show( confirmDeleteStationDialog )
+    $mdDialog.show(confirmDeleteStationDialog)
     .then(function () {
       var currentStateParams = StateManager.state.params;
 
@@ -873,29 +856,26 @@ function StationCreatorController (
       var stationCode = currentStateParams.stationCode || null;
 
 
-      if ( mobidulCode && stationCode )
-
+      if ( mobidulCode && stationCode ) {
         StationCreatorService
-          .deleteStation( mobidulCode, stationCode )
-          .success(function (response, status, headers, config)
-          {
-            if ( response === 'success' )
-            {
+          .deleteStation(mobidulCode, stationCode)
+          .success(function (response, status, headers, config) {
+            if ( response === 'success' ) {
               $state.go(
                 'mobidul.map',
-                { mobidulCode : mobidulCode },
-                { reload : true }
+                { mobidulCode: mobidulCode },
+                { reload: true }
               );
             }
           })
-          .error(function (response, status, headers, config)
-          {
+          .error(function (response, status, headers, config) {
             $log.error(response);
             $log.error(status);
 
-            // TODO - alert window einbauen und dann weiterleitung auf (?)
+            // TODO: alert window einbauen und dann weiterleitung auf (?)
             alert(response);
           });
+      }
     });
   }
 
@@ -905,7 +885,7 @@ function StationCreatorController (
    */
   function cloneStation () {
     // First create a confirm Dialog in order to ask the user
-    // if he really wants to duplicate the current station.
+    // if the user really wants to duplicate the current station.
     var confirmCloneStation = $mdDialog.confirm()
       .parent( angular.element(document.body) )
       .title($translate.instant('STATION_CLONE'))
@@ -920,8 +900,8 @@ function StationCreatorController (
       var mobidulCode = StateManager.state.params.mobidulCode || null;
       var stationCode = StateManager.state.params.stationCode || null;
 
+      // Save the changes to the current station.
       if ( mobidulCode && stationCode ) {
-        // Save the changes to the current station.
         stationCreator.saveChanges();
       }
 
@@ -933,7 +913,7 @@ function StationCreatorController (
           // Show a dialog to inform the user about
           // changing the position of the new station.
           var informAboutStationChange = $mdDialog.alert()
-            .parent( angular.element(document.body) )
+            .parent(angular.element(document.body))
             .clickOutsideToClose(true)
             .title($translate.instant('STATION_CLONE_SUCCESS'))
             .textContent($translate.instant('STATION_CHANGE_PLACE'))
@@ -941,20 +921,19 @@ function StationCreatorController (
             .ok($translate.instant('CLOSE'));
 
           $mdDialog.show(informAboutStationChange)
-          .then(function () {
-            // Change the view to the new station,
-            // if the station has been cloned successfully.
-            if (response.success) {
-              $state.go(
-                'mobidul.station.edit.place',
-                {stationCode: cloneStationCode},
-                {'reload': true}
-              );
-            }
-          });
+            .then(function () {
+              // Change the view to the new station,
+              // if the station has been cloned successfully.
+              if (response.success) {
+                $state.go(
+                  'mobidul.station.edit.place',
+                  { stationCode: cloneStationCode },
+                  { 'reload': true }
+                );
+              }
+            });
         })
-        .error(function (response, status, headers, config)
-        {
+        .error(function (response, status, headers, config) {
           $log.error(response);
           $log.error(status);
         });

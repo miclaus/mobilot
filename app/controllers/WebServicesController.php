@@ -46,7 +46,8 @@ class WebServicesController extends BaseController
         "img",                "imgs",                     "js",
         "src",                "style",                    "upload",
         "Codes",              "CloseCode",                "OpenCode",
-        "DeleteCode",         "media",                    "includes"
+        "DeleteCode",         "media",                    "includes",
+        "SocialCodes"
       );
 
     return in_array($name, $protectedMobidulNames);
@@ -231,15 +232,6 @@ class WebServicesController extends BaseController
 
   public function IsLoggedIn()
   {
-    // if ( Auth::check() )
-    // {
-    //   return "true";
-    // }
-    // else
-    // {
-    //   return "false";
-    // }
-
     return Auth::check() ? 'true' : 'false';
   }
 
@@ -338,17 +330,18 @@ class WebServicesController extends BaseController
   }
 
 
-  // TODO when creating a new mobidul, this webservice returns an 500 Internal Server Error
+  // TODO: when creating a new mobidul, this webservice returns an 500 Internal Server Error
   public function SetOptions ($mobidulCode)
   {
-    if ( $this->GetIsOwnerOfMobidul($mobidulCode) )
+    // \Log::info('SetOptions content:');
+
+    if ( $this->GetIsOwnerOfMobidul($mobidulCode))
     {
       $request = Request::instance();
       $content = $request->getContent();
       // \Log::info($content);
 
       $mobidulOptionsJson = json_decode($content);
-
 
       $m = Mobidul::findByCode($mobidulCode);
 
@@ -363,24 +356,11 @@ class WebServicesController extends BaseController
 
       $m->save();
 
-
-      /*
-      DB::table('mobidulOptions')
-        ->where('mobidulId', $mobidulId)
-        ->update(array('showMenu' => $mobidulOptionsJson->showMenu,
-                'allowedStationTypes' => $mobidulOptionsJson->allowedStationTypes,
-                'automaticPollingTime' => $mobidulOptionsJson->automaticPollingTime,
-                'editingDistance' => $mobidulOptionsJson->editingDistance,
-                'private' => $mobidulOptionsJson->private,
-                'locked' => $mobidulOptionsJson->locked
-                ));
-        Log::info("success");
-      */
-
       return 'success';
     }
-    else
+    else {
       return 'not-allowed';
+    }
   }
 
 
@@ -697,7 +677,7 @@ class WebServicesController extends BaseController
       'msg'   => 'WSC_MOBIDUL_NO_RIGHTS'
     ];
 
-    if ( $this->GetIsOwnerOfMobidul($mobidulCode) )
+    if ( $this->GetIsOwnerOfMobidul($mobidulCode))
     {
       // Access POST-Data:
       // First we fetch the Request instance
@@ -732,8 +712,8 @@ class WebServicesController extends BaseController
 
     return $response;
   }
-  
-  
+
+
   /**
    * This function duplicates a mobidul in the database and all it's subtables by the given mobidulcode.
    * @param $mobidulCode Code of the old mobidul which is duplicated
@@ -746,7 +726,7 @@ class WebServicesController extends BaseController
       'msg' => "Couldn't clone Mobidul.",
       'success' => false
     ];
-  
+
     $request = Request::instance();
     $content = $request->getContent();
     $mobidulJson = json_decode($content);
@@ -824,7 +804,7 @@ class WebServicesController extends BaseController
             $clonedNavigation->save();
           }
         }
-        
+
         // THIRD - C: Replicate the stations for the current Mobidul and other related tables
         /*
          * Important as it stores the cloned Categories and checks if they already exist so if one station is assigned
@@ -832,7 +812,7 @@ class WebServicesController extends BaseController
          * exists and if so, the cloned category from this list is used.
          */
         $clonedCategoryExists = array();
-        
+
         if (count($stationOC) > 0) {
           foreach ($stationOC as $station) {
             $clonedStation = $station->replicate();
@@ -858,17 +838,17 @@ class WebServicesController extends BaseController
                 $clonedCategory = $categoryOC->replicate();
                 $clonedCategory->mobidulId = $clonedMobidulID;
                 $clonedCategory->save();
-                
+
                 array_push($clonedCategoryExists, $clonedCategory);
               }
-              
+
               DB::table('category2station')->insert(
                 [
                   'categoryId' => $clonedCategory->id,
                   'stationId' => $clonedStation->id
                 ]);
-              
-              
+
+
               $navCategory = NavigationItem::where('mobidulId', $clonedMobidulID)->where('categoryId', $categoryOC->id)->first();
               $navStation = NavigationItem::where('mobidulId', $clonedMobidulID)->where('stationId', $stationId)->first();
 
@@ -883,8 +863,8 @@ class WebServicesController extends BaseController
             }
           }
         }
-  
-  
+
+
         //THIRD - D: Duplicate the categories that are not related to any station
         $categoryOC = Category::where('mobidulId', $mobidulId)->get();
         if (count($categoryOC) > 0) {
@@ -929,7 +909,7 @@ class WebServicesController extends BaseController
         $clonedStation = $stationOC->replicate();
         $clonedStationCode = $clonedStation->code;
         $clonedStationName = $clonedStation->name;
-        
+
         //This is used to change the name and code of the station if already existent. Also if the name would be
         //too long it gets shortened in order to generate a new code.
         if(strlen($clonedStationCode) > 19) {
@@ -945,7 +925,7 @@ class WebServicesController extends BaseController
         } else {
           $clonedStation->name = $this->ChangeStationData($clonedStationName, "name");
         }
-        
+
         $allStationsOfMobidul = Station::where('mobidulId', $mobidulId)->get();
         $clonedStation->order = $clonedStation->order + count($allStationsOfMobidul) - 1;
         $clonedStation->save();
@@ -982,7 +962,7 @@ class WebServicesController extends BaseController
 
   public function IsOwnerOfMobidul ($mobidulCode)
   {
-    // if ( $this->GetIsOwnerOfMobidul($mobidulCode) )
+    // if ( $this->GetIsOwnerOfMobidul($mobidulCode))
     // {
     //   return "true";
     // }
@@ -1002,24 +982,19 @@ class WebServicesController extends BaseController
    * @param $mobidulCode
    * @return bool
    */
-  public function GetIsOwnerOfMobidul ($mobidulCode)
-  {
-    // \Log::info('********************');
-    // \Log::info('Check is owner of mobidul');
-    // \Log::info(Auth::check() && Auth::user()->username == 'admin');
-    // \Log::info($this->GetOwnerOfMobidul($mobidulCode) == Auth::id());
+   public function GetIsOwnerOfMobidul ($mobidulCode)
+   {
+     if ( Auth::check() && Auth::user()->admin == true ) {
+       return true;
+     }
 
-    if ( Auth::check() && Auth::user()->username == 'admin' )
-      return true;
-
-    return $this->GetOwnerOfMobidul($mobidulCode) == Auth::id();
-  }
+     return $this->GetOwnerOfMobidul($mobidulCode) == Auth::id();
+   }
 
 
   public function GetRoleForMobidul ($mobidulCode = null)
   {
-    if ( ! is_null($mobidulCode) )
-    {
+    if ( ! is_null($mobidulCode)) {
       // \Log::info('Getting mobidulId for mobidulCode : ');
       // \Log::info($mobidulCode);
 
@@ -1031,24 +1006,21 @@ class WebServicesController extends BaseController
       // \Log::info(' Is Allowed ');
       // \Log::info(' Is Allowed ');
 
-      if ( $this->GetIsOwnerOfMobidul($mobidulCode) ) {
-          $role = 1;
+      if ( $this->GetIsOwnerOfMobidul($mobidulCode)) {
+        $role = 1;
+      } else if ( $this->IsAllowed($mobidulCode) == true
+        || $this->IsAllowed($mobidulCode) === 'allowed'
+      ) {
+        $role = 2;
+      } else {
+        $role = 0;
       }
-      else if ( $this->IsAllowed($mobidulCode) == true ||
-                $this->IsAllowed($mobidulCode) === 'allowed' ) {
-          $role = 2;
-      }
-      else {
-          $role = 0;
-      }
-
 
       return [
         'role' => $role
       ];
-    }
-    else {
-        return 'error';
+    } else {
+      return 'error';
     }
   }
 
@@ -1071,19 +1043,73 @@ class WebServicesController extends BaseController
   }
 
 
-  public function GetNewestMobiduls ()
+  // TODO: Performance should be improved !
+  public function GetNewestMobiduls()
   {
-    return Mobidul::pub()->newestFirst()->basicInformation()->get();
+    $newestMobiduls = Mobidul::pub()->newestFirst()->basicInformation()->get();
+
+    $mobiuser = User::where('username', '=', 'mobiuser')
+      ->select('id')
+      ->first();
+
+    $mobiuserMobiduls = DB::table('user2mobidul')
+      ->where('userId', $mobiuser->id)
+      ->select('mobidulId')
+      ->get();
+
+    $filteredNewestMobiduls = [];
+    foreach ($newestMobiduls as $mobidul) {
+      $mobidulId = $mobidul['id'];
+      $foundMobidul = false;
+
+      foreach ($mobiuserMobiduls as $muMobidul) {
+        if ( $mobidulId === $muMobidul->mobidulId ) {
+          $foundMobidul = true;
+          break;
+        }
+      }
+
+      if ( ! $foundMobidul ) {
+        $filteredNewestMobiduls[] = $mobidul;
+      }
+    }
+
+    return $filteredNewestMobiduls;
   }
 
 
+  // TODO: Performance should be improved !
   public function MobidulNearMe($latitude, $longitude)
   {
-    //SELECT mob.id, MIN( ( 6371 * acos( cos( radians($latitude) ) * cos( radians( st.lat ) ) * cos( radians( st.lon ) - radians($longitude) ) + sin( radians($latitude) ) * sin( radians( st.lat ) ) ) ) ) AS distance FROM mobidul as mob JOIN station as st ON st.mobidulId = mob.id GROUP BY mob.id ORDER BY distance
+    // SELECT mob.id, MIN( ( 6371 * acos( cos( radians($latitude) ) * cos( radians( st.lat ) ) * cos( radians( st.lon ) - radians($longitude) ) + sin( radians($latitude) ) * sin( radians( st.lat ) ) ) ) ) AS distance FROM mobidul as mob JOIN station as st ON st.mobidulId = mob.id GROUP BY mob.id ORDER BY distance
 
-    $mobiduls = DB::select('SELECT mob.id, mob.code, mob.description, mob.name, mob.background, MIN( ( 6371 * acos( cos( radians(:lat) ) * cos( radians( st.lat ) ) * cos( radians( st.lon ) - radians(:lon) ) + sin( radians(:latx) ) * sin( radians( st.lat ) ) ) ) ) AS distance FROM mobidul as mob JOIN station as st ON st.mobidulId = mob.id GROUP BY mob.id ORDER BY distance', array('lat'=>$latitude, 'lon'=>$longitude, 'latx'=>$latitude)); //()->getPdo()->exec( $sql );
+    $nearMeMobiduls = DB::select('SELECT mob.id, mob.code, mob.description, mob.name, mob.background, MIN( ( 6371 * acos( cos( radians(:lat) ) * cos( radians( st.lat ) ) * cos( radians( st.lon ) - radians(:lon) ) + sin( radians(:latx) ) * sin( radians( st.lat ) ) ) ) ) AS distance FROM mobidul as mob JOIN station as st ON st.mobidulId = mob.id GROUP BY mob.id ORDER BY distance', array('lat'=>$latitude, 'lon'=>$longitude, 'latx'=>$latitude)); //()->getPdo()->exec( $sql );
 
-    return $mobiduls;
+    $mobiuser = User::where('username', '=', 'mobiuser')
+      ->select('id')
+      ->first();
+
+    $mobiuserMobiduls = DB::table('user2mobidul')
+      ->where('userId', $mobiuser->id)
+      ->select('mobidulId')
+      ->get();
+
+    $filteredNearMeMobiduls = [];
+    foreach ($nearMeMobiduls as $mobidul) {
+      $mobidulId = $mobidul->id;
+      $foundMobidul = false;
+
+      foreach ($mobiuserMobiduls as $muMobidul) {
+        if ( $mobidulId === $muMobidul->mobidulId ) {
+          $foundMobidul = true;
+          break;
+        }
+      }
+
+      $filteredNearMeMobiduls[] = $mobidul;
+    }
+
+    return $filteredNearMeMobiduls;
   }
 
 
@@ -1177,20 +1203,19 @@ class WebServicesController extends BaseController
 
 
     $mob = Mobidul::where('code', $mobidulCode)->first();
-    if ( ! $this->GetIsOwnerOfMobidul($mobidulCode) )
+    if ( ! $this->GetIsOwnerOfMobidul($mobidulCode)) {
       return 'not allowed';
+    }
 
 
-    if ( isset($mob) )
-    {
-      foreach ( $categoryNamesJson as $element )
-      {
-        if ( $this->HasCategoryName($element->name, $mob->id) )
+    if (isset($mob)) {
+      foreach ($categoryNamesJson as $element) {
+        if ( $this->HasCategoryName($element->name, $mob->id)) {
           return 'category-exists';
+        }
       }
 
-      foreach ( $categoryNamesJson as $element )
-      {
+      foreach ($categoryNamesJson as $element) {
         $category = new Category(['name' => $element->name]);
         $mob->categories()->save($category);
       }
@@ -1313,9 +1338,11 @@ class WebServicesController extends BaseController
       return 'not allowed';
 
 
-    if ( Mobidul::find($mobidulId)->locked &&
-         ! $this->GetIsOwnerOfMobidul($mobidulCode) )
+    if ( Mobidul::find($mobidulId)->locked
+      && ! $this->GetIsOwnerOfMobidul($mobidulCode)
+    ) {
       return 'mobidul locked';
+    }
 
 
     $request = Request::instance();
@@ -1405,24 +1432,25 @@ class WebServicesController extends BaseController
     $stationId = Station::GetId($stationCode);
 
 
-    if ( ! $this->isAllowed($mobidulCode) )
-
-      return array(
+    if ( ! $this->isAllowed($mobidulCode)) {
+      return [
         'saved' => false,
         'msg'   => 'not allowed'
-      );
+      ];
+    }
 
 
-    if ( Mobidul::find($mobidulId)->locked &&
-       ! $this->GetIsOwnerOfMobidul($mobidulCode) )
-
-      return array(
+    if ( Mobidul::find($mobidulId)->locked
+      && ! $this->GetIsOwnerOfMobidul($mobidulCode)
+    ) {
+      return [
         'saved' => false,
         'msg'   => 'mobidul locked'
-      );
+      ];
+    }
 
 
-    $request   = Request::instance();
+    $request = Request::instance();
     $params  = $request->getContent();
     // $paramsArr = json_decode($params, true);
     $params  = json_decode($params);
@@ -1443,7 +1471,7 @@ class WebServicesController extends BaseController
 
     if ( is_bool($canEdit) && $canEdit )
     {
-      if ( $this->GetIsOwnerOfMobidul($mobidulCode) )
+      if ( $this->GetIsOwnerOfMobidul($mobidulCode))
 
         DB::table('station')
           ->where('id', $stationId)
@@ -1588,14 +1616,15 @@ class WebServicesController extends BaseController
   {
     $mobidulId = Mobidul::GetId($mobidulCode);
 
-    if ( ! $this->isAllowed($mobidulCode) )
+    if ( ! $this->isAllowed($mobidulCode)) {
       return 'not allowed';
+    }
 
-
-    if ( Mobidul::find($mobidulId)->locked &&
-       ! $this->GetIsOwnerOfMobidul($mobidulCode) )
-
+    if ( Mobidul::find($mobidulId)->locked
+      && ! $this->GetIsOwnerOfMobidul($mobidulCode)
+    ) {
       return 'mobidul locked';
+    }
 
 
 
@@ -1603,7 +1632,7 @@ class WebServicesController extends BaseController
 
     if ( is_bool($canEdit) && $canEdit )
     {
-      if ( ! empty($stationId) )
+      if ( ! empty($stationId))
       {
         DB::beginTransaction();
         DB::statement('SET FOREIGN_KEY_CHECKS = 0');
@@ -1997,7 +2026,7 @@ class WebServicesController extends BaseController
     }
     return null;
   }
-  
+
   /**
    * This function checks whether the user is allowed to clone the current mobidul or not.
    * @return bool information if the user can clone or not

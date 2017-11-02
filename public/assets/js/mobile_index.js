@@ -40,13 +40,31 @@ var app = {
         console.log('Received Event: ' + id);
 
         navigator.geolocation.getCurrentPosition(
-        function (e) {
-            console.log('GEO LOCATING PERMITTED');
-        },
-        function (e) {
-            // TODO show information dialog
-            console.log('GEO LOCATING NOT PERMITTED');
-        });
+          function (e) {
+              console.log('GEO LOCATING PERMITTED');
+          },
+          function (e) {
+              // TODO show information dialog
+              console.log('GEO LOCATING NOT PERMITTED');
+          }
+        );
+
+        if(cordova.InAppBrowser){
+          document.onclick = function (e) {
+            e = e ||  window.event;
+            var element = e.target || e.srcElement;
+
+            if (element.tagName == 'A') {
+              if(element.id == 'pdfManual' && !isIos) {
+                window.open('https://www.mobilot.at/assets/doc/UserDoku_v1_20170127.pdf', '_system', 'location=yes');
+                return false;
+              }else{
+                var ref = cordova.InAppBrowser.open(element.href, '_blank', 'location=no,toolbar=yes');
+                return false;
+              }
+            }
+          };
+        }
     }
 };
 

@@ -101,16 +101,20 @@ Route::get('/CloseCode/{Code}','CodeController@closeCode')->before('auth');
 Route::get('/OpenCode/{Code}','CodeController@openCode')->before('auth');
 Route::get('/DeleteCode/{Code}','CodeController@deleteCode')->before('auth');
 
+Route::get('/SocialCodes/{mobidulCode}/{stationCode}/{componentId}','SocialCodeController@getSocialCodes');
+Route::get('Social/{code}', 'SocialCodeController@social');
+Route::get('SocialJoin/{code}/{componentId}', 'SocialCodeController@JoinSocial');
+
 Route::post('/{mobidulCode}/UpdateStartPage','ConfigController@updateStartPage')->before('auth');
 
-Route::get('login', array('as' => 'login', 'uses' => 'UserController@showLogin'));
-Route::post('login', array('as' => 'login', 'uses' => 'UserController@login'));
+Route::post('login', 'UserController@login');
 Route::get('logout','UserController@logout');
 Route::post('register','UserController@register');
 Route::get('currentUser', 'UserController@getCurrentUser');
 Route::post('requestRestore', 'UserController@requestRestore');
 Route::post('changePassword', 'UserController@changePassword')->before('auth');
 Route::post('changePasswordNoAuth', 'UserController@changePassword');
+Route::post('sendFeedback', 'UserController@sendFeedback');
 
 Route::post('DeleteMobidul', 'WebServicesController@DeleteMobidul')->before('auth');
 
@@ -131,7 +135,7 @@ Route::get('{mobName}/getConfig', 'ConfigController@getConfiguration');
 //looks if given Name is existing Mobidul, if not found--> error
 Route::get('{mobName}/isMobidul', 'ConfigController@isMobidul');
 
-//gets mobidul with certain station loaded. for qr codes or quicklinks
+// gets mobidul with certain station loaded. for qr codes or quicklinks
 Route::get('{mobidulCode}/{stationCode}', 'HomeController@showMobidulWithCode');
 
 //check if Image with certain hash has already been uploaded

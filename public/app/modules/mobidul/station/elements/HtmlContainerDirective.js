@@ -17,11 +17,12 @@ function HtmlContainer (
   return {
     restrict: 'E',
     transclude: true,
-    template: '' +
+    template: (
       '<div>' +
         '<div ng-transclude></div>' +
-        '<br>' +
+        '<md-divider id="station_creator_divider"></md-divider>' +
       '</div>'
+    )
   }
 }
 

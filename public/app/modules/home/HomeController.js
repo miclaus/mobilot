@@ -60,12 +60,10 @@ function HomeController (
 
   /// private functions
 
-  function _init ()
-  {
+  function _init () {
     $log.debug('HomeController init');
 
     LocalStorageService.init();
-    LocalStorageService.explainNearGeoPermit(true);
   }
 
 
@@ -101,24 +99,19 @@ function HomeController (
 
     home.checkRequiredLogin();
 
-    if ( ! home.requiredLogin )
-    {
-      if ( StateManager.isHomeLogin() )
-        $state
-          .go('home')
-          .then(function ()
-          {
-            home.loadMobiduls( path );
+    if ( ! home.requiredLogin ) {
+      if ( StateManager.isHomeLogin() ) {
+        $state.go('home')
+          .then(function() {
+            home.loadMobiduls(path);
           });
-
-      else if ( path )
-        home.loadMobiduls( path );
-    }
-    else
-    {
-      // NOTE - this is important in order to hide the AppLoader
+      } else if (path) {
+        home.loadMobiduls(path);
+      }
+    } else {
+      // NOTE: this is important in order to hide the AppLoader
       // for home.login when e.g. redirected from Activate view
-      $rootScope.$emit('rootScope:toggleAppLoader', { action : 'hide' });
+      $rootScope.$emit('rootScope:toggleAppLoader', { action: 'hide' });
     }
   }
 
@@ -232,35 +225,39 @@ function HomeController (
 
   function changeSearchType ()
   {
-    //$log.debug('changeSearchType called at tab index :');
-    //$log.debug(home.searchTypeIndex);
+    // $log.debug('changeSearchType called at tab index :');
+    // $log.debug(home.searchTypeIndex);
 
     home.mobiduls  = [];
     home.isLoading = true;
 
-    if (
-      home.searchTypeIndex == HomeService.NEAR_ME_MOBIDULE &&
-      home.myPosition == null &&
-      LocalStorageService.shouldExplainNearGeoPermit()
+    if ( home.searchTypeIndex == HomeService.NEAR_ME_MOBIDULE
+      && home.myPosition == null
     ) {
-      var informAboutGeoPermitDialog =
-        $mdDialog.alert()
-          .parent(angular.element(document.body))
-          .title($translate.instant('INFORMATION'))
-          .textContent($translate.instant('EXPLAIN_NEAR_GEO_PERMIT'))
-          .ariaLabel($translate.instant('INFORMATION'))
-          .ok($translate.instant('OK'));
+      if ( LocalStorageService.shouldExplainGeoPermit() ) {
+        var informAboutGeoPermitDialog =
+          $mdDialog.alert()
+            .parent(angular.element(document.body))
+            .title($translate.instant('INFORMATION'))
+            .textContent($translate.instant('EXPLAIN_NEAR_GEO_PERMIT'))
+            .ariaLabel($translate.instant('INFORMATION'))
+            .ok($translate.instant('OK'));
 
-      $mdDialog.show( informAboutGeoPermitDialog )
-      .then(function () {
-        LocalStorageService.explainNearGeoPermit(false);
+        $mdDialog.show( informAboutGeoPermitDialog )
+        .then(function () {
+          LocalStorageService.explainGeoPermit(false);
 
+          home.getMyPosition()
+            .then(function (position) {
+              _switchSearchType();
+            });
+        });
+      } else {
         home.getMyPosition()
-          .then(function (position)
-          {
+          .then(function (position) {
             _switchSearchType();
           });
-      });
+      }
     } else {
       _switchSearchType();
     }
@@ -300,7 +297,7 @@ function HomeController (
 
       var mobidulsData = home.prepareMobidulsData( data );
 
-      // NOTE - save mobiduls data to show
+      // NOTE: save mobiduls data to show
       home.mobiduls = mobidulsData;
     })
     .error(function (data, status, headers, config) {

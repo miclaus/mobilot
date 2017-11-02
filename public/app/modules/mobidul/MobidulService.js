@@ -7,7 +7,7 @@ MobidulService.$inject = [
   '$log', '$rootScope', '$stateParams',
   '$http', '$q', '$timeout', '$translate',
   'LocalStorageService'
-  /*'RallyService'*/
+  // 'RallyService'
 ];
 
 
@@ -15,9 +15,8 @@ function MobidulService (
   $log, $rootScope, $stateParams,
   $http, $q, $timeout, $translate,
   LocalStorageService
-  /*RallyService*/
-)
-{
+  // RallyService
+) {
   /// MobidulService
   var service = {
     // constants
@@ -28,44 +27,24 @@ function MobidulService (
     MOBIDUL_MODE_RALLY : 'rally',
     MOBIDUL_MODE_DEFAULT : 'default',
 
-    MOBIDUL_MODES : [
-    {
+    MOBIDUL_MODES: [{
       name: 'rally',
 
-      states: [
-        'ACTIVATED', 'OPEN', 'COMPLETED'
-      ],
+      states: [ 'ACTIVATED', 'OPEN', 'COMPLETED' ],
 
       // TODO: extract this so it doesn't need duplication for each mode
       // TODO: add finished elements
       elements: {
-        HTML: {
-          icon: 'text_format'
-        },
-        IF_NEAR: {
-          icon: 'my_location'
-        },
-        INPUT_CODE: {
-          icon: 'check_box'
-        },
-        BUTTON: {
-          icon: 'crop_16_9'
-        },
-        //PHOTO_UPLOAD: {
-        //  icon: 'camera_alt'
-        //},
-        SET_TIMEOUT: {
-          icon: 'alarm'
-        },
-        //FREE_TEXT: {
-        //  icon: 'edit'
-        //},
-        //CONFIRM_SOCIAL: {
-        //  icon: 'people'
-        //},
-        SHOW_SCORE: {
-          icon: 'plus_one'
-        }
+        HTML: { icon: 'text_format' },
+        IF_NEAR: { icon: 'my_location' },
+        BLUETOOTH: { icon: 'settings_bluetooth' },
+        INPUT_CODE: { icon: 'check_box' },
+        BUTTON: { icon: 'crop_16_9' },
+        // PHOTO_UPLOAD: { icon: 'camera_alt' },
+        SET_TIMEOUT: { icon: 'alarm' },
+        FREE_TEXT: { icon: 'short_text' },
+        CONFIRM_SOCIAL: { icon: 'people' },
+        SHOW_SCORE: { icon: 'plus_one' }
       },
 
       defaultState: 'ACTIVATED',
@@ -74,15 +53,13 @@ function MobidulService (
     }, {
       name: 'default',
       elements: {
-        HTML: {
-          icon: 'text_format'
-        }
+        HTML: { icon: 'text_format' }
       },
 
-      states: 'OPEN',
+      states: ['OPEN'],
 
       defaultState: 'OPEN',
-      
+
       hiddenStations: false
     }],
 
@@ -102,8 +79,7 @@ function MobidulService (
     cloneMobidul      : cloneMobidul,
 
     /// app config
-    Config :
-    {
+    Config: {
       // TODO: these belong into a core ConfigService
       isMenuEnabled     : true,
       isHomeViewEnabled : true,
@@ -115,7 +91,7 @@ function MobidulService (
     },
 
     /// mobidul config
-    Mobidul : {
+    Mobidul: {
       // background: '',
       // foreground: '',
       // font: '',
@@ -138,33 +114,27 @@ function MobidulService (
 
 
   function getConfig (mobidulCode) {
-    //$log.info('getConfig in MobidulService');
-    //$log.debug(mobidulCode);
+    // $log.info('getConfig in MobidulService');
+    // $log.debug(mobidulCode);
 
     var deferred = $q.defer();
 
-    // don't reload the config if mobidul isn't changed
-    if ( service.Mobidul.mobidulCode === mobidulCode ) {
-      deferred.resolve(service.Mobidul);
-    } else {
+    $http.get(cordovaUrl + '/' + mobidulCode + '/getConfig')
+    .success(function (response, status, headers, config) {
+      // console.debug('response: ', response);
 
-      $http.get(cordovaUrl + '/' + mobidulCode + '/getConfig')
-      .success(function (response, status, headers, config) {
+      if (response) {
+        service.Mobidul = response;
+      }
 
-        if ( response ) {
-          service.Mobidul = response;
-        }
+      deferred.resolve(response);
+    })
+    .error(function (response, status, headers, config) {
+      $log.error(response);
+      $log.error(status);
 
-        deferred.resolve(response);
-      })
-      .error(function (response, status, headers, config) {
-        $log.error(response);
-        $log.error(status);
-
-        deferred.reject(response);
-      });
-    }
-
+      deferred.reject(response);
+    });
 
     return deferred.promise;
   }
@@ -174,10 +144,8 @@ function MobidulService (
 
     service.getMobidulConfig(mobidulCode)
     .then(function (config) {
-
-      $log.debug('initProgress - config');
-      $log.debug(config);
-
+      // $log.debug('initProgress - config');
+      // $log.debug(config);
       LocalStorageService.getProgress(mobidulCode, config.states)
       .then(function (progress) {
         service.progress = progress;
@@ -205,7 +173,7 @@ function MobidulService (
 
     service.getConfig(mobidulCode)
     .then(function (config) {
-      
+
       LocalStorageService.getProgress(mobidulCode, config.states)
       .then(function (progress) {
         defer.resolve(progress);
@@ -282,6 +250,10 @@ function MobidulService (
 
       service.getConfig(mobidulCode)
       .then(function (config) {
+        if ( ! config.mode) {
+          //fallback for old mobiduls
+          config.mode = service.MOBIDUL_MODE_DEFAULT;
+        }
         resolve(config.mode);
       }, function (error) {
         reject(error);
@@ -338,7 +310,6 @@ function MobidulService (
       $log.error(status);
     });
   }
-
 
   return service;
 }
